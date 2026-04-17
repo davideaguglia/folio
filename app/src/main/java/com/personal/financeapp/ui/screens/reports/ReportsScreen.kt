@@ -3,10 +3,11 @@ package com.personal.financeapp.ui.screens.reports
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,9 +42,22 @@ fun ReportsScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item { MonthSelector(state, onMonthChange = { m, y -> viewModel.selectMonth(m, y) }) }
         item { MonthlyBarChartCard(state.monthlyData) }
         if (state.categoryBreakdown.isNotEmpty()) {
-            item { CategoryBreakdownCard(state.categoryBreakdown) }
+            item { CategoryBreakdownCard(state) }
+        } else {
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No expenses in this month",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
         }
         item { NetWorthHistoryCard(state, onRecordSnapshot = { showSnapshotDialog = true }) }
     }
@@ -69,6 +83,55 @@ fun ReportsScreen(
             },
             dismissButton = { TextButton(onClick = { showSnapshotDialog = false }) { Text("Cancel") } }
         )
+    }
+}
+
+@Composable
+private fun MonthSelector(state: ReportsUiState, onMonthChange: (Int, Int) -> Unit) {
+    val monthNames = remember {
+        SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+    }
+    val cal = remember(state.selectedMonth, state.selectedYear) {
+        Calendar.getInstance().apply { set(state.selectedYear, state.selectedMonth, 1) }
+    }
+    val label = monthNames.format(cal.time)
+
+    // Prevent selecting future months
+    val now = Calendar.getInstance()
+    val isCurrentOrFuture = state.selectedYear > now.get(Calendar.YEAR) ||
+        (state.selectedYear == now.get(Calendar.YEAR) && state.selectedMonth >= now.get(Calendar.MONTH))
+
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(onClick = {
+                val prev = Calendar.getInstance().apply { set(state.selectedYear, state.selectedMonth, 1) }
+                prev.add(Calendar.MONTH, -1)
+                onMonthChange(prev.get(Calendar.MONTH), prev.get(Calendar.YEAR))
+            }) {
+                Icon(Icons.Default.ChevronLeft, contentDescription = "Previous month")
+            }
+
+            Text(
+                label,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            IconButton(
+                onClick = {
+                    val next = Calendar.getInstance().apply { set(state.selectedYear, state.selectedMonth, 1) }
+                    next.add(Calendar.MONTH, 1)
+                    onMonthChange(next.get(Calendar.MONTH), next.get(Calendar.YEAR))
+                },
+                enabled = !isCurrentOrFuture
+            ) {
+                Icon(Icons.Default.ChevronRight, contentDescription = "Next month")
+            }
+        }
     }
 }
 
@@ -99,12 +162,26 @@ private fun MonthlyBarChartCard(data: List<MonthlyData>) {
 }
 
 @Composable
-private fun CategoryBreakdownCard(breakdown: List<CategoryBreakdown>) {
-    val total = breakdown.sumOf { it.amount }
+private fun CategoryBreakdownCard(state: ReportsUiState) {
+    val breakdown = state.categoryBreakdown
+    val monthNames = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+    val cal = Calendar.getInstance().apply { set(state.selectedYear, state.selectedMonth, 1) }
+    val totalSpent = breakdown.sumOf { it.amount }
+
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Expense Breakdown", style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Expenses — ${monthNames.format(cal.time)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold)
+                Text(CurrencyFormatter.format(totalSpent),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ExpenseRed, fontWeight = FontWeight.SemiBold)
+            }
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DonutChart(
@@ -126,7 +203,7 @@ private fun CategoryBreakdownCard(breakdown: List<CategoryBreakdown>) {
                             )
                             Text(item.category.name, modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-                            Text("${String.format("%.0f", item.percent * 100)}%",
+                            Text(CurrencyFormatter.format(item.amount),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }

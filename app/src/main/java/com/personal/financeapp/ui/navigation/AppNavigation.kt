@@ -19,13 +19,13 @@ import com.personal.financeapp.ui.screens.transactions.AddEditTransactionScreen
 import com.personal.financeapp.ui.screens.transactions.TransactionListScreen
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Home", Icons.Default.Home)
-    object Transactions : Screen("transactions", "Transactions", Icons.Default.Receipt)
-    object Investments : Screen("investments", "Investments", Icons.Default.TrendingUp)
-    object Budget : Screen("budget", "Budget", Icons.Default.PieChart)
-    object Reports : Screen("reports", "Reports", Icons.Default.BarChart)
-    object AddTransaction : Screen("add_transaction?id={id}", "Add", Icons.Default.Add)
-    object InvestmentDetail : Screen("investment/{id}", "Detail", Icons.Default.Info)
+    object Dashboard    : Screen("dashboard",    "Home",     Icons.Default.Home)
+    object Transactions : Screen("transactions", "History",  Icons.Default.Receipt)
+    object Investments  : Screen("investments",  "Assets",   Icons.Default.TrendingUp)
+    object Budget       : Screen("budget",       "Budget",   Icons.Default.PieChart)
+    object Reports      : Screen("reports",      "Reports",  Icons.Default.BarChart)
+    object AddTransaction  : Screen("add_transaction?id={id}", "Add",    Icons.Default.Add)
+    object InvestmentDetail: Screen("investment/{id}",         "Detail", Icons.Default.Info)
 }
 
 val bottomNavItems = listOf(
@@ -36,17 +36,37 @@ val bottomNavItems = listOf(
     Screen.Reports
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    isDarkTheme: Boolean = false,
+    onToggleTheme: () -> Unit = {}
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
-    val showBottomBar = bottomNavItems.any { it.route == currentRoute }
+    val currentScreen = bottomNavItems.find { it.route == currentRoute }
+    val showChrome = currentScreen != null // show top bar + bottom bar on main tabs only
 
     Scaffold(
+        topBar = {
+            if (showChrome) {
+                TopAppBar(
+                    title = { Text(currentScreen?.label ?: "Finance Tracker") },
+                    actions = {
+                        IconButton(onClick = onToggleTheme) {
+                            Icon(
+                                imageVector = if (isDarkTheme) Icons.Default.LightMode
+                                              else Icons.Default.DarkMode,
+                                contentDescription = "Toggle theme"
+                            )
+                        }
+                    }
+                )
+            }
+        },
         bottomBar = {
-            if (showBottomBar) {
+            if (showChrome) {
                 NavigationBar {
                     bottomNavItems.forEach { screen ->
                         NavigationBarItem(

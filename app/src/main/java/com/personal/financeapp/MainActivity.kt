@@ -23,7 +23,10 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
             FinanceAppTheme(darkTheme = isDarkTheme) {
-                AppNavigation()
+                AppNavigation(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = { themeViewModel.toggleTheme() }
+                )
             }
         }
     }
