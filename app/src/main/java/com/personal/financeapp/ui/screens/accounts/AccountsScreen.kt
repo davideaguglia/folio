@@ -1,5 +1,6 @@
 package com.personal.financeapp.ui.screens.accounts
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,13 +14,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.financeapp.data.local.entity.AccountEntity
 import com.personal.financeapp.data.repository.AccountWithBalance
+import com.personal.financeapp.ui.theme.Crimson
+import com.personal.financeapp.ui.theme.Forest
 import com.personal.financeapp.util.CurrencyFormatter
 
 @Composable
@@ -29,36 +34,74 @@ fun AccountsScreen(viewModel: AccountsViewModel = hiltViewModel()) {
     var editTarget by remember { mutableStateOf<AccountEntity?>(null) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(onClick = { editTarget = null; showDialog = true }) {
-                Icon(Icons.Default.Add, "Add account")
-            }
+            FloatingActionButton(
+                onClick = { editTarget = null; showDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                elevation = FloatingActionButtonDefaults.elevation(8.dp)
+            ) { Icon(Icons.Default.Add, "Add account") }
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(bottom = 88.dp)
         ) {
+            // ── Header ────────────────────────────────────────────
             item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text("Total Balance", style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(
-                            CurrencyFormatter.format(state.totalBalance),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
+                        .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 16.dp)
+                ) {
+                    Text(
+                        "${state.accountsWithBalance.size} ACCOUNTS",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text("Accounts", style = MaterialTheme.typography.headlineLarge)
+                }
+            }
+
+            // ── Total balance hero ────────────────────────────────
+            item {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                    OutlinedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                "LIQUID POSITION",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                CurrencyFormatter.format(state.totalBalance),
+                                style = MaterialTheme.typography.displaySmall,
+                                color = if (state.totalBalance >= 0) MaterialTheme.colorScheme.onSurface else Crimson
+                            )
+                        }
                     }
                 }
             }
+
+            // ── Account cards ─────────────────────────────────────
             items(state.accountsWithBalance, key = { it.account.id }) { item ->
-                AccountCard(
-                    item = item,
-                    onEdit = { editTarget = item.account; showDialog = true },
-                    onDelete = { viewModel.delete(item.account) }
-                )
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                    AccountCard(
+                        item = item,
+                        onEdit = { editTarget = item.account; showDialog = true },
+                        onDelete = { viewModel.delete(item.account) }
+                    )
+                }
             }
         }
     }
@@ -76,66 +119,90 @@ fun AccountsScreen(viewModel: AccountsViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun AccountCard(
-    item: AccountWithBalance,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
+private fun AccountCard(item: AccountWithBalance, onEdit: () -> Unit, onDelete: () -> Unit) {
     val acc = item.account
-    val color = runCatching { Color(android.graphics.Color.parseColor(acc.color)) }
-        .getOrDefault(MaterialTheme.colorScheme.primary)
+    val accentColor = runCatching { Color(android.graphics.Color.parseColor(acc.color)) }
+        .getOrDefault(Forest)
+    val isNegative = item.currentBalance < 0
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.size(48.dp).background(color.copy(0.15f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Icon(
-                    imageVector = accountTypeIcon(acc.type),
-                    contentDescription = null,
-                    tint = color
-                )
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(accentColor.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = accountTypeIcon(acc.type),
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        acc.type.replace('_', ' ').lowercase().replaceFirstChar { it.titlecase() },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(1.dp))
+                    Text(acc.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                }
+                Row {
+                    IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Edit, "Edit", modifier = Modifier.size(16.dp))
+                    }
+                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Delete, "Delete", modifier = Modifier.size(16.dp))
+                    }
+                }
             }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(acc.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
                 Text(
-                    acc.type.replace('_', ' ').lowercase().replaceFirstChar { it.titlecase() },
-                    style = MaterialTheme.typography.bodyMedium,
+                    "CURRENT BALANCE",
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     CurrencyFormatter.format(item.currentBalance),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (item.currentBalance >= 0) MaterialTheme.colorScheme.onSurface
-                            else MaterialTheme.colorScheme.error
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isNegative) Crimson else MaterialTheme.colorScheme.onSurface
                 )
             }
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, "Edit") }
-            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Delete") }
         }
     }
 }
 
 private fun accountTypeIcon(type: String) = when (type) {
-    "CHECKING" -> Icons.Default.AccountBalance
-    "SAVINGS" -> Icons.Default.Savings
+    "CHECKING"    -> Icons.Default.AccountBalance
+    "SAVINGS"     -> Icons.Default.Savings
     "CREDIT_CARD" -> Icons.Default.CreditCard
-    else -> Icons.Default.AccountBalanceWallet
+    else          -> Icons.Default.AccountBalanceWallet
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AccountDialog(
-    account: AccountEntity?,
-    onDismiss: () -> Unit,
-    onSave: (AccountEntity) -> Unit
-) {
+private fun AccountDialog(account: AccountEntity?, onDismiss: () -> Unit, onSave: (AccountEntity) -> Unit) {
     var name by remember { mutableStateOf(account?.name ?: "") }
     var type by remember { mutableStateOf(account?.type ?: "CHECKING") }
     var initialBalance by remember { mutableStateOf(account?.initialBalance?.toString() ?: "0") }
@@ -181,10 +248,9 @@ private fun AccountDialog(
                 onClick = {
                     onSave(AccountEntity(
                         id = account?.id ?: 0L,
-                        name = name,
-                        type = type,
+                        name = name, type = type,
                         initialBalance = initialBalance.toDoubleOrNull() ?: 0.0,
-                        color = account?.color ?: "#607D8B",
+                        color = account?.color ?: "#2D5A3F",
                         icon = account?.icon ?: "account_balance"
                     ))
                 },

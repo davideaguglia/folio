@@ -1,29 +1,30 @@
 package com.personal.financeapp.ui.screens.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.personal.financeapp.data.local.dao.TransactionWithDetails
 import com.personal.financeapp.ui.components.DonutChart
 import com.personal.financeapp.ui.theme.ChartColors
-import com.personal.financeapp.ui.theme.ExpenseRed
+import com.personal.financeapp.ui.theme.Forest
 import com.personal.financeapp.ui.theme.IncomeGreen
+import com.personal.financeapp.ui.theme.Terra
 import com.personal.financeapp.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,35 +32,172 @@ import java.util.*
 @Composable
 fun DashboardScreen(
     onAddTransaction: () -> Unit,
+    isDarkTheme: Boolean = false,
+    onToggleTheme: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val balance = state.monthlyIncome - state.monthlyExpense
 
+    val dateLabel = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date()) }
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    val greeting = when { hour < 12 -> "Good morning"; hour < 17 -> "Good afternoon"; else -> "Good evening" }
+
+    val groupedTx = remember(state.recentTransactions) {
+        state.recentTransactions.groupBy { txDateLabel(it.transaction.date) }.entries.toList()
+    }
+
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddTransaction) {
-                Icon(Icons.Default.Add, contentDescription = "Add transaction")
-            }
+            FloatingActionButton(
+                onClick = onAddTransaction,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp)
+            ) { Icon(Icons.Default.Add, "Add transaction") }
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(bottom = 88.dp),
         ) {
-            item { NetWorthCard(state.monthlyIncome, state.monthlyExpense) }
-            item { MonthSummaryRow(state.monthlyIncome, state.monthlyExpense) }
-            if (state.categoryExpenses.isNotEmpty()) {
-                item { SpendingBreakdownCard(state.categoryExpenses) }
+            // ── Editorial header ─────────────────────────────────
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
+                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column {
+                        Text(
+                            dateLabel.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(greeting, style = MaterialTheme.typography.headlineLarge)
+                    }
+                    IconButton(onClick = onToggleTheme) {
+                        Icon(
+                            if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            "Toggle theme",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
+
+            // ── Monthly balance hero ─────────────────────────────
+            item {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    AtelierCard {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                "THIS MONTH · NET FLOW",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                CurrencyFormatter.format(balance),
+                                style = MaterialTheme.typography.displayMedium,
+                                color = if (balance >= 0) IncomeGreen else Terra
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            Spacer(Modifier.height(14.dp))
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Box(Modifier.size(6.dp).background(IncomeGreen, CircleShape))
+                                        Text(
+                                            "EARNED",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = IncomeGreen
+                                        )
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        CurrencyFormatter.format(state.monthlyIncome),
+                                        style = MaterialTheme.typography.headlineSmall
+                                    )
+                                }
+                                VerticalDivider(
+                                    modifier = Modifier.height(44.dp).padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Box(Modifier.size(6.dp).background(Terra, CircleShape))
+                                        Text(
+                                            "SPENT",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Terra
+                                        )
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        CurrencyFormatter.format(state.monthlyExpense),
+                                        style = MaterialTheme.typography.headlineSmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Spending breakdown ───────────────────────────────
+            if (state.categoryExpenses.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        SpendingCard(state.categoryExpenses)
+                    }
+                }
+            }
+
+            // ── Recent activity ──────────────────────────────────
             if (state.recentTransactions.isNotEmpty()) {
                 item {
-                    Text("Recent Transactions", style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Recent activity", style = MaterialTheme.typography.headlineSmall)
+                    }
                 }
-                items(state.recentTransactions) { item ->
-                    TransactionRow(item)
+
+                groupedTx.forEach { (dateStr, txList) ->
+                    item(key = "tx_group_$dateStr") {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            Text(
+                                dateStr.uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 2.dp, bottom = 6.dp, top = if (dateStr != groupedTx.first().key) 12.dp else 0.dp)
+                            )
+                            AtelierCard {
+                                txList.forEachIndexed { i, item ->
+                                    TxRow(item, last = i == txList.lastIndex)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -67,114 +205,35 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun NetWorthCard(income: Double, expense: Double) {
-    val net = income - expense
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("This Month Balance", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                CurrencyFormatter.format(net),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = if (net >= 0) IncomeGreen else ExpenseRed
-            )
-        }
-    }
-}
-
-@Composable
-private fun MonthSummaryRow(income: Double, expense: Double) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SummaryChip(
-            label = "Income",
-            amount = income,
-            color = IncomeGreen,
-            icon = Icons.Default.ArrowUpward,
-            modifier = Modifier.weight(1f)
-        )
-        SummaryChip(
-            label = "Expenses",
-            amount = expense,
-            color = ExpenseRed,
-            icon = Icons.Default.ArrowDownward,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun SummaryChip(
-    label: String,
-    amount: Double,
-    color: Color,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    modifier: Modifier = Modifier
-) {
-    Card(modifier = modifier) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier.size(32.dp).clip(CircleShape).background(color.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-            }
-            Column {
-                Text(label, style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(CurrencyFormatter.format(amount), style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SpendingBreakdownCard(expenses: List<CategoryExpense>) {
+private fun SpendingCard(expenses: List<CategoryExpense>) {
     val total = expenses.sumOf { it.amount }
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Spending by Category", style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(12.dp))
+    AtelierCard {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                "SPENDING BY CATEGORY",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(CurrencyFormatter.format(total), style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DonutChart(
-                    data = expenses.mapIndexed { i, e ->
-                        ChartColors[i % ChartColors.size] to e.amount
-                    },
-                    modifier = Modifier.size(120.dp),
-                    centerLabel = CurrencyFormatter.format(total)
+                    data = expenses.mapIndexed { i, e -> ChartColors[i % ChartColors.size] to e.amount },
+                    modifier = Modifier.size(110.dp)
                 )
                 Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     expenses.take(5).forEachIndexed { i, exp ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.size(10.dp).clip(CircleShape)
-                                    .background(ChartColors[i % ChartColors.size])
-                            )
+                        val pct = if (total > 0) exp.amount / total * 100 else 0.0
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(Modifier.size(8.dp).background(ChartColors[i % ChartColors.size], CircleShape))
+                            Text(exp.category.name, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
                             Text(
-                                exp.category.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f),
-                                maxLines = 1
-                            )
-                            Text(
-                                CurrencyFormatter.format(exp.amount),
-                                style = MaterialTheme.typography.labelMedium,
+                                "${String.format("%.0f", pct)}%",
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -186,38 +245,81 @@ private fun SpendingBreakdownCard(expenses: List<CategoryExpense>) {
 }
 
 @Composable
-private fun TransactionRow(item: com.personal.financeapp.data.local.dao.TransactionWithDetails) {
+private fun TxRow(item: TransactionWithDetails, last: Boolean) {
     val tx = item.transaction
     val isIncome = tx.type == "INCOME"
-    val dateStr = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(tx.date))
-    ListItem(
-        headlineContent = { Text(item.category?.name ?: "—") },
-        supportingContent = {
-            Text("${item.account?.name ?: "—"} · $dateStr",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        },
-        trailingContent = {
-            Text(
-                CurrencyFormatter.formatWithSign(tx.amount, isIncome),
-                color = if (isIncome) IncomeGreen else ExpenseRed,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        leadingContent = {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Box(
-                modifier = Modifier.size(40.dp).clip(CircleShape)
-                    .background(if (isIncome) IncomeGreen.copy(.15f) else ExpenseRed.copy(.15f)),
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        if (isIncome) Forest.copy(alpha = 0.12f) else Terra.copy(alpha = 0.12f),
+                        CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
                     contentDescription = null,
-                    tint = if (isIncome) IncomeGreen else ExpenseRed,
-                    modifier = Modifier.size(20.dp)
+                    tint = if (isIncome) IncomeGreen else Terra,
+                    modifier = Modifier.size(16.dp)
                 )
             }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    item.category?.name ?: "Uncategorized",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1
+                )
+                Text(
+                    item.account?.name ?: "—",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                CurrencyFormatter.formatWithSign(tx.amount, isIncome),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isIncome) IncomeGreen else MaterialTheme.colorScheme.onSurface
+            )
         }
+        if (!last) HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 0.5.dp,
+            modifier = Modifier.padding(horizontal = 14.dp)
+        )
+    }
+}
+
+private fun txDateLabel(dateMs: Long): String {
+    val today = Calendar.getInstance()
+    val txDay = Calendar.getInstance().apply { timeInMillis = dateMs }
+    return when {
+        today.get(Calendar.YEAR) == txDay.get(Calendar.YEAR) &&
+        today.get(Calendar.DAY_OF_YEAR) == txDay.get(Calendar.DAY_OF_YEAR) -> "Today"
+        today.get(Calendar.YEAR) == txDay.get(Calendar.YEAR) &&
+        today.get(Calendar.DAY_OF_YEAR) - txDay.get(Calendar.DAY_OF_YEAR) == 1 -> "Yesterday"
+        else -> SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(dateMs))
+    }
+}
+
+@Composable
+fun AtelierCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    OutlinedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+        content = content
     )
-    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
 }

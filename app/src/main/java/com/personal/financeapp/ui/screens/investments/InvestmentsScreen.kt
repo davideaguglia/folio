@@ -1,10 +1,12 @@
 package com.personal.financeapp.ui.screens.investments
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -52,17 +54,38 @@ fun InvestmentsScreen(
     var showUpdatePriceFor by remember { mutableStateOf<InvestmentEntity?>(null) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(onClick = { editTarget = null; showAddDialog = true }) {
-                Icon(Icons.Default.Add, "Add investment")
-            }
+            FloatingActionButton(
+                onClick = { editTarget = null; showAddDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                elevation = FloatingActionButtonDefaults.elevation(8.dp)
+            ) { Icon(Icons.Default.Add, "Add investment") }
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
+                        .padding(start = 4.dp, end = 4.dp, top = 14.dp, bottom = 8.dp)
+                ) {
+                    Text(
+                        "PORTFOLIO",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text("Investments", style = MaterialTheme.typography.headlineLarge)
+                }
+            }
             item { PortfolioSummaryCard(state) }
             if (state.typeBreakdown.isNotEmpty()) {
                 item { PortfolioTypeChart(state.typeBreakdown) }
@@ -105,7 +128,12 @@ fun InvestmentsScreen(
 
 @Composable
 private fun PortfolioSummaryCard(state: InvestmentsUiState) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Portfolio Value", style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -190,9 +218,12 @@ private fun InvestmentCard(
     val gainLoss = value - cost
     val gainColor = if (gainLoss >= 0) IncomeGreen else ExpenseRed
 
-    ElevatedCard(
+    OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onViewDetail
+        onClick = onViewDetail,
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(

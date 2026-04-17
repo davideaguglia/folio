@@ -1,9 +1,11 @@
 package com.personal.financeapp.ui.screens.reports
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -39,9 +41,26 @@ fun ReportsScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .statusBarsPadding()
+                    .padding(start = 4.dp, end = 4.dp, top = 14.dp, bottom = 8.dp)
+            ) {
+                Text(
+                    "ANALYTICS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(2.dp))
+                Text("Reports", style = MaterialTheme.typography.headlineLarge)
+            }
+        }
         item { MonthSelector(state, onMonthChange = { m, y -> viewModel.selectMonth(m, y) }) }
         item { MonthlyBarChartCard(state.monthlyData) }
         if (state.categoryBreakdown.isNotEmpty()) {
@@ -101,7 +120,12 @@ private fun MonthSelector(state: ReportsUiState, onMonthChange: (Int, Int) -> Un
     val isCurrentOrFuture = state.selectedYear > now.get(Calendar.YEAR) ||
         (state.selectedYear == now.get(Calendar.YEAR) && state.selectedMonth >= now.get(Calendar.MONTH))
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -137,7 +161,12 @@ private fun MonthSelector(state: ReportsUiState, onMonthChange: (Int, Int) -> Un
 
 @Composable
 private fun MonthlyBarChartCard(data: List<MonthlyData>) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Income vs Expenses (12 months)", style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold)
@@ -168,7 +197,12 @@ private fun CategoryBreakdownCard(state: ReportsUiState) {
     val cal = Calendar.getInstance().apply { set(state.selectedYear, state.selectedMonth, 1) }
     val totalSpent = breakdown.sumOf { it.amount }
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -216,7 +250,12 @@ private fun CategoryBreakdownCard(state: ReportsUiState) {
 
 @Composable
 private fun NetWorthHistoryCard(state: ReportsUiState, onRecordSnapshot: () -> Unit) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

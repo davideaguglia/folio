@@ -1,26 +1,31 @@
 package com.personal.financeapp.ui.screens.transactions
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.financeapp.data.local.dao.TransactionWithDetails
-import com.personal.financeapp.ui.theme.ExpenseRed
+import com.personal.financeapp.ui.theme.Forest
 import com.personal.financeapp.ui.theme.IncomeGreen
+import com.personal.financeapp.ui.theme.Terra
 import com.personal.financeapp.util.CurrencyFormatter
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -38,87 +43,163 @@ fun TransactionListScreen(
     val scope = rememberCoroutineScope()
     var searchVisible by remember { mutableStateOf(false) }
 
+    val groupedTx = remember(state.transactions) {
+        state.transactions
+            .groupBy { txDateLabel(it.transaction.date) }
+            .entries.toList()
+    }
+
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddTransaction) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
+            FloatingActionButton(
+                onClick = onAddTransaction,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                elevation = FloatingActionButtonDefaults.elevation(8.dp)
+            ) { Icon(Icons.Default.Add, "Add") }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // Filter row
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = state.filterType == null,
-                    onClick = { viewModel.setFilter(null) },
-                    label = { Text("All") }
-                )
-                FilterChip(
-                    selected = state.filterType == "INCOME",
-                    onClick = { viewModel.setFilter("INCOME") },
-                    label = { Text("Income") }
-                )
-                FilterChip(
-                    selected = state.filterType == "EXPENSE",
-                    onClick = { viewModel.setFilter("EXPENSE") },
-                    label = { Text("Expenses") }
-                )
-                Spacer(Modifier.weight(1f))
-                IconButton(onClick = { searchVisible = !searchVisible }) {
-                    Icon(Icons.Default.Search, "Search")
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(bottom = 88.dp)
+        ) {
+            // ── Header ────────────────────────────────────────────
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
+                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column {
+                        Text(
+                            "LEDGER",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text("Transactions", style = MaterialTheme.typography.headlineLarge)
+                    }
+                    IconButton(onClick = { searchVisible = !searchVisible }) {
+                        Icon(
+                            Icons.Default.Search, "Search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
-            AnimatedVisibility(searchVisible) {
-                OutlinedTextField(
-                    value = state.searchQuery,
-                    onValueChange = { viewModel.setSearch(it) },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    placeholder = { Text("Search transactions…") },
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Search, null) },
-                    trailingIcon = {
-                        if (state.searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { viewModel.setSearch("") }) {
-                                Icon(Icons.Default.Close, "Clear")
+
+            // ── Search field ──────────────────────────────────────
+            item {
+                AnimatedVisibility(searchVisible) {
+                    OutlinedTextField(
+                        value = state.searchQuery,
+                        onValueChange = { viewModel.setSearch(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        placeholder = { Text("Search transactions…") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(100.dp),
+                        leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(18.dp)) },
+                        trailingIcon = {
+                            if (state.searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.setSearch("") }) {
+                                    Icon(Icons.Default.Close, "Clear", modifier = Modifier.size(18.dp))
+                                }
                             }
                         }
+                    )
+                }
+            }
+
+            // ── Filter pills ──────────────────────────────────────
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    val filters = listOf(null to "All", "INCOME" to "Income", "EXPENSE" to "Expenses")
+                    items(filters) { (type, label) ->
+                        val selected = state.filterType == type
+                        FilterChip(
+                            selected = selected,
+                            onClick = { viewModel.setFilter(type) },
+                            label = { Text(label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        )
                     }
-                )
+                }
             }
 
             if (state.transactions.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No transactions yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(top = 64.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No transactions yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 88.dp)
-                ) {
-                    items(state.transactions, key = { it.transaction.id }) { item ->
-                        SwipeToDismissTransactionItem(
-                            item = item,
-                            onEdit = { onEditTransaction(item.transaction.id) },
-                            onDelete = {
-                                viewModel.delete(item.transaction)
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Transaction deleted",
-                                        actionLabel = "Undo",
-                                        duration = SnackbarDuration.Short
+                groupedTx.forEachIndexed { groupIndex, (dateStr, txList) ->
+                    item(key = "date_$dateStr") {
+                        Column(
+                            modifier = Modifier.padding(
+                                start = 16.dp, end = 16.dp,
+                                top = if (groupIndex == 0) 4.dp else 16.dp,
+                                bottom = 6.dp
+                            )
+                        ) {
+                            Text(
+                                text = dateStr.uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 2.dp, bottom = 6.dp)
+                            )
+                            OutlinedCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                colors = CardDefaults.outlinedCardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                txList.forEachIndexed { i, item ->
+                                    SwipeToDismissTransactionItem(
+                                        item = item,
+                                        onEdit = { onEditTransaction(item.transaction.id) },
+                                        onDelete = {
+                                            viewModel.delete(item.transaction)
+                                            scope.launch {
+                                                val result = snackbarHostState.showSnackbar(
+                                                    message = "Transaction deleted",
+                                                    actionLabel = "Undo",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                                if (result == SnackbarResult.ActionPerformed) {
+                                                    viewModel.insert(item.transaction)
+                                                }
+                                            }
+                                        }
                                     )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.insert(item.transaction)
-                                    }
+                                    if (i != txList.lastIndex) HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.outlineVariant,
+                                        thickness = 0.5.dp,
+                                        modifier = Modifier.padding(horizontal = 14.dp)
+                                    )
                                 }
                             }
-                        )
-                        HorizontalDivider(thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant)
+                        }
                     }
                 }
             }
@@ -135,17 +216,17 @@ private fun SwipeToDismissTransactionItem(
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) { onDelete(); true }
-            else false
+            if (value == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false
         }
     )
-
     SwipeToDismissBox(
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
             Box(
-                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
@@ -165,53 +246,79 @@ private fun SwipeToDismissTransactionItem(
 private fun TransactionItem(item: TransactionWithDetails, onClick: () -> Unit) {
     val tx = item.transaction
     val isIncome = tx.type == "INCOME"
-    val dateStr = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(tx.date))
+    val dateStr = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(tx.date))
 
-    ListItem(
+    Row(
         modifier = Modifier
+            .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .clickable { onClick() },
-        headlineContent = {
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .background(
+                    if (isIncome) Forest.copy(alpha = 0.12f) else Terra.copy(alpha = 0.12f),
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                contentDescription = null,
+                tint = if (isIncome) IncomeGreen else Terra,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 item.category?.name ?: "Uncategorized",
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
             )
-        },
-        supportingContent = {
-            Column {
-                if (tx.description.isNotBlank()) Text(tx.description, maxLines = 1)
+            Text(
+                buildString {
+                    if (tx.description.isNotBlank()) { append(tx.description); append(" · ") }
+                    append(item.account?.name ?: "—")
+                    append(" · ")
+                    append(dateStr)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                CurrencyFormatter.formatWithSign(tx.amount, isIncome),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isIncome) IncomeGreen else MaterialTheme.colorScheme.onSurface
+            )
+            if (tx.isRecurring) {
                 Text(
-                    "${item.account?.name ?: "—"} · $dateStr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        trailingContent = {
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    CurrencyFormatter.formatWithSign(tx.amount, isIncome),
-                    color = if (isIncome) IncomeGreen else ExpenseRed,
-                    fontWeight = FontWeight.SemiBold
-                )
-                if (tx.isRecurring) {
-                    Text("Recurring", style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary)
-                }
-            }
-        },
-        leadingContent = {
-            Box(
-                modifier = Modifier.size(42.dp).clip(CircleShape)
-                    .background(if (isIncome) IncomeGreen.copy(.15f) else ExpenseRed.copy(.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
-                    contentDescription = null,
-                    tint = if (isIncome) IncomeGreen else ExpenseRed
+                    "↻ recurring",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
-    )
+    }
+}
+
+private fun txDateLabel(dateMs: Long): String {
+    val today = Calendar.getInstance()
+    val txDay = Calendar.getInstance().apply { timeInMillis = dateMs }
+    return when {
+        today.get(Calendar.YEAR) == txDay.get(Calendar.YEAR) &&
+        today.get(Calendar.DAY_OF_YEAR) == txDay.get(Calendar.DAY_OF_YEAR) -> "Today"
+        today.get(Calendar.YEAR) == txDay.get(Calendar.YEAR) &&
+        today.get(Calendar.DAY_OF_YEAR) - txDay.get(Calendar.DAY_OF_YEAR) == 1 -> "Yesterday"
+        else -> SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(dateMs))
+    }
 }
