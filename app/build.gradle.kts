@@ -43,7 +43,13 @@ android {
     }
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
-        jniLibs { useLegacyPackaging = false }
+        jniLibs {
+            useLegacyPackaging = false
+            // datastore-preferences ships libdatastore_shared_counter.so for its
+            // multi-process variant. We only use single-process DataStore, and the
+            // shipped .so isn't 16KB-aligned, which breaks Android 15+ devices.
+            excludes += "**/libdatastore_shared_counter.so"
+        }
     }
 }
 
