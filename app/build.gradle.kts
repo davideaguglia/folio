@@ -47,6 +47,14 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes = true
+    arguments {
+        arg("dagger.fastInit", "enabled")
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
