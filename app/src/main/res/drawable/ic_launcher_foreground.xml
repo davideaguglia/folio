@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Bar chart icon representing finance -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,72 L28,58 L38,58 L38,72 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,72 L44,46 L54,46 L54,72 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,72 L60,38 L70,38 L70,72 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M76,72 L76,52 L86,52 L86,72 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,74 L88,74 L88,78 L24,78 Z"/>
+</vector>
