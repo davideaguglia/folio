@@ -175,6 +175,7 @@ private fun InvestmentCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InvestmentDialog(
     investment: InvestmentEntity?,

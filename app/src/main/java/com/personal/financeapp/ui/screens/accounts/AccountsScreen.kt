@@ -129,6 +129,7 @@ private fun accountTypeIcon(type: String) = when (type) {
     else -> Icons.Default.AccountBalanceWallet
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AccountDialog(
     account: AccountEntity?,

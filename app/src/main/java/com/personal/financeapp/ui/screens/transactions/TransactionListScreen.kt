@@ -123,6 +123,7 @@ fun TransactionListScreen(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeToDismissTransactionItem(
     item: TransactionWithDetails,
