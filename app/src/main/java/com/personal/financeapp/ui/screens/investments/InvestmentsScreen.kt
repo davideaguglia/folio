@@ -182,12 +182,19 @@ private fun InvestmentDialog(
     onDismiss: () -> Unit,
     onSave: (InvestmentEntity) -> Unit
 ) {
+    val predefinedTypes = listOf("Stock", "Bond", "Gold", "Other")
+    val initialType = investment?.type ?: "Stock"
+    val isInitiallyCustom = initialType !in predefinedTypes
+
     var name by remember { mutableStateOf(investment?.name ?: "") }
     var ticker by remember { mutableStateOf(investment?.ticker ?: "") }
-    var type by remember { mutableStateOf(investment?.type ?: "STOCK") }
+    var selectedType by remember { mutableStateOf(if (isInitiallyCustom) "Custom" else initialType) }
+    var customTypeName by remember { mutableStateOf(if (isInitiallyCustom) initialType else "") }
     var quantity by remember { mutableStateOf(investment?.quantity?.toString() ?: "") }
     var purchasePrice by remember { mutableStateOf(investment?.purchasePrice?.toString() ?: "") }
     var typeExpanded by remember { mutableStateOf(false) }
+
+    val effectiveType = if (selectedType == "Custom") customTypeName.trim() else selectedType
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -200,19 +207,32 @@ private fun InvestmentDialog(
                     label = { Text("Ticker / Symbol (optional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 ExposedDropdownMenuBox(expanded = typeExpanded, onExpandedChange = { typeExpanded = it }) {
                     OutlinedTextField(
-                        value = type.replace('_', ' ').replaceFirstChar { it.titlecase() },
+                        value = selectedType,
                         onValueChange = {}, readOnly = true, label = { Text("Type") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(typeExpanded) },
                         modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
-                        listOf("STOCK", "CRYPTO", "ETF", "REAL_ESTATE", "OTHER").forEach { t ->
+                        predefinedTypes.forEach { t ->
                             DropdownMenuItem(
-                                text = { Text(t.replace('_', ' ').replaceFirstChar { it.titlecase() }) },
-                                onClick = { type = t; typeExpanded = false }
+                                text = { Text(t) },
+                                onClick = { selectedType = t; typeExpanded = false }
                             )
                         }
+                        DropdownMenuItem(
+                            text = { Text("Custom…") },
+                            onClick = { selectedType = "Custom"; typeExpanded = false }
+                        )
                     }
+                }
+                if (selectedType == "Custom") {
+                    OutlinedTextField(
+                        value = customTypeName,
+                        onValueChange = { customTypeName = it },
+                        label = { Text("Custom type name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
                 }
                 OutlinedTextField(value = quantity, onValueChange = { quantity = it },
                     label = { Text("Quantity") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
@@ -227,7 +247,7 @@ private fun InvestmentDialog(
                 onClick = {
                     onSave(InvestmentEntity(
                         id = investment?.id ?: 0L,
-                        name = name, ticker = ticker, type = type,
+                        name = name, ticker = ticker, type = effectiveType,
                         quantity = quantity.toDoubleOrNull() ?: 0.0,
                         purchasePrice = purchasePrice.toDoubleOrNull() ?: 0.0,
                         currentPrice = investment?.currentPrice ?: (purchasePrice.toDoubleOrNull() ?: 0.0),
@@ -235,7 +255,10 @@ private fun InvestmentDialog(
                         notes = investment?.notes ?: ""
                     ))
                 },
-                enabled = name.isNotBlank() && quantity.toDoubleOrNull() != null && purchasePrice.toDoubleOrNull() != null
+                enabled = name.isNotBlank()
+                        && quantity.toDoubleOrNull() != null
+                        && purchasePrice.toDoubleOrNull() != null
+                        && effectiveType.isNotBlank()
             ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }

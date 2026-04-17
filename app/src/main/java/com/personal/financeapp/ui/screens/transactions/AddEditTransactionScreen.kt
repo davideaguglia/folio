@@ -31,24 +31,41 @@ fun AddEditTransactionScreen(
         state.transactions.find { it.transaction.id == transactionId }?.transaction
     }
 
-    var type by remember { mutableStateOf(existing?.type ?: "EXPENSE") }
-    var amount by remember { mutableStateOf(existing?.amount?.toString() ?: "") }
-    var description by remember { mutableStateOf(existing?.description ?: "") }
-    var selectedCategoryId by remember { mutableStateOf(existing?.categoryId ?: 0L) }
-    var selectedAccountId by remember { mutableStateOf(existing?.accountId ?: 0L) }
-    var selectedDate by remember { mutableStateOf(existing?.date ?: System.currentTimeMillis()) }
-    var isRecurring by remember { mutableStateOf(existing?.isRecurring ?: false) }
-    var recurringPeriod by remember { mutableStateOf(existing?.recurringPeriod ?: "MONTHLY") }
+    // Mutable form state — all start at sensible defaults
+    var type            by remember { mutableStateOf("EXPENSE") }
+    var amount          by remember { mutableStateOf("") }
+    var description     by remember { mutableStateOf("") }
+    var selectedCategoryId by remember { mutableStateOf(0L) }
+    var selectedAccountId  by remember { mutableStateOf(0L) }
+    var selectedDate    by remember { mutableStateOf(System.currentTimeMillis()) }
+    var isRecurring     by remember { mutableStateOf(false) }
+    var recurringPeriod by remember { mutableStateOf("MONTHLY") }
 
-    var showDatePicker by remember { mutableStateOf(false) }
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var accountExpanded by remember { mutableStateOf(false) }
-    var periodExpanded by remember { mutableStateOf(false) }
+    // Populate the form exactly once when the existing transaction is loaded from DB
+    var formInitialized by remember { mutableStateOf(false) }
+    LaunchedEffect(existing) {
+        if (existing != null && !formInitialized) {
+            type               = existing.type
+            amount             = existing.amount.toString()
+            description        = existing.description
+            selectedCategoryId = existing.categoryId
+            selectedAccountId  = existing.accountId
+            selectedDate       = existing.date
+            isRecurring        = existing.isRecurring
+            recurringPeriod    = existing.recurringPeriod ?: "MONTHLY"
+            formInitialized    = true
+        }
+    }
+
+    var showDatePicker    by remember { mutableStateOf(false) }
+    var categoryExpanded  by remember { mutableStateOf(false) }
+    var accountExpanded   by remember { mutableStateOf(false) }
+    var periodExpanded    by remember { mutableStateOf(false) }
 
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val filteredCategories = state.categories.filter { it.type == type }
 
-    // Auto-select first category when type changes or categories load
+    // Auto-select first category only if none is selected and we are NOT editing
     LaunchedEffect(type, filteredCategories) {
         if (selectedCategoryId == 0L && filteredCategories.isNotEmpty()) {
             selectedCategoryId = filteredCategories.first().id
@@ -88,7 +105,11 @@ fun AddEditTransactionScreen(
                 listOf("EXPENSE", "INCOME").forEach { t ->
                     FilterChip(
                         selected = type == t,
-                        onClick = { type = t; selectedCategoryId = 0L },
+                        onClick = {
+                            type = t
+                            // Reset category selection when type switches
+                            if (!isEditing) selectedCategoryId = 0L
+                        },
                         label = { Text(t.replaceFirstChar { it.titlecase() }) },
                         modifier = Modifier.weight(1f)
                     )
@@ -112,7 +133,8 @@ fun AddEditTransactionScreen(
                 onExpandedChange = { categoryExpanded = it }
             ) {
                 OutlinedTextField(
-                    value = filteredCategories.find { it.id == selectedCategoryId }?.name ?: "Select category",
+                    value = filteredCategories.find { it.id == selectedCategoryId }?.name
+                        ?: "Select category",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Category") },
@@ -138,7 +160,8 @@ fun AddEditTransactionScreen(
                 onExpandedChange = { accountExpanded = it }
             ) {
                 OutlinedTextField(
-                    value = state.accounts.find { it.id == selectedAccountId }?.name ?: "Select account",
+                    value = state.accounts.find { it.id == selectedAccountId }?.name
+                        ?: "Select account",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Account") },
@@ -237,7 +260,9 @@ fun AddEditTransactionScreen(
                     onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = amount.toDoubleOrNull() != null && selectedCategoryId != 0L && selectedAccountId != 0L
+                enabled = amount.toDoubleOrNull() != null
+                        && selectedCategoryId != 0L
+                        && selectedAccountId != 0L
             ) {
                 Text(if (isEditing) "Update" else "Save Transaction")
             }
@@ -264,10 +289,10 @@ fun AddEditTransactionScreen(
 private fun calculateNextDate(from: Long, period: String): Long {
     val cal = Calendar.getInstance().apply { timeInMillis = from }
     when (period) {
-        "DAILY" -> cal.add(Calendar.DAY_OF_YEAR, 1)
-        "WEEKLY" -> cal.add(Calendar.WEEK_OF_YEAR, 1)
+        "DAILY"   -> cal.add(Calendar.DAY_OF_YEAR, 1)
+        "WEEKLY"  -> cal.add(Calendar.WEEK_OF_YEAR, 1)
         "MONTHLY" -> cal.add(Calendar.MONTH, 1)
-        "YEARLY" -> cal.add(Calendar.YEAR, 1)
+        "YEARLY"  -> cal.add(Calendar.YEAR, 1)
     }
     return cal.timeInMillis
 }
