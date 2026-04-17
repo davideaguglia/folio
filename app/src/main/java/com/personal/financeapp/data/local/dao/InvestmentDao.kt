@@ -15,6 +15,9 @@ interface InvestmentDao {
     @Query("SELECT COALESCE(SUM(currentPrice * quantity), 0.0) FROM investments")
     fun getTotalPortfolioValue(): Flow<Double>
 
+    @Query("SELECT DISTINCT type FROM investments ORDER BY type ASC")
+    fun getDistinctTypes(): Flow<List<String>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(investment: InvestmentEntity): Long
 

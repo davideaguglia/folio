@@ -10,12 +10,15 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private val PREDEFINED_TYPES = setOf("STOCK", "BOND", "GOLD", "OTHER")
+
 data class InvestmentsUiState(
     val investments: List<InvestmentEntity> = emptyList(),
     val totalValue: Double = 0.0,
     val totalCost: Double = 0.0,
     val gainLoss: Double = 0.0,
-    val gainLossPct: Double = 0.0
+    val gainLossPct: Double = 0.0,
+    val typeBreakdown: List<Pair<String, Double>> = emptyList()
 )
 
 @HiltViewModel
@@ -29,9 +32,17 @@ class InvestmentsViewModel @Inject constructor(
             val totalCost = investments.sumOf { it.purchasePrice * it.quantity }
             val gainLoss = totalValue - totalCost
             val gainLossPct = if (totalCost > 0) gainLoss / totalCost * 100 else 0.0
-            InvestmentsUiState(investments, totalValue, totalCost, gainLoss, gainLossPct)
+            val typeBreakdown = investments
+                .groupBy { it.type }
+                .map { (type, invs) -> type to invs.sumOf { it.currentPrice * it.quantity } }
+                .sortedByDescending { it.second }
+            InvestmentsUiState(investments, totalValue, totalCost, gainLoss, gainLossPct, typeBreakdown)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InvestmentsUiState())
+
+    val customTypes: StateFlow<List<String>> = repository.getDistinctTypes()
+        .map { types -> types.filter { it !in PREDEFINED_TYPES } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun getPriceHistory(investmentId: Long): Flow<List<InvestmentPriceEntity>> =
         repository.getPriceHistory(investmentId)

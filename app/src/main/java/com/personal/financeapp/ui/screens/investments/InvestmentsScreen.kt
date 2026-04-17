@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,15 +12,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.financeapp.data.local.entity.InvestmentEntity
+import com.personal.financeapp.ui.components.DonutChart
 import com.personal.financeapp.ui.theme.ExpenseRed
 import com.personal.financeapp.ui.theme.IncomeGreen
 import com.personal.financeapp.util.CurrencyFormatter
+
+private val PREDEFINED_TYPES = listOf("STOCK", "BOND", "GOLD", "OTHER")
+
+private val TYPE_COLORS = mapOf(
+    "STOCK" to Color(0xFF2196F3),
+    "BOND"  to Color(0xFF4CAF50),
+    "GOLD"  to Color(0xFFFFC107),
+    "OTHER" to Color(0xFF9C27B0)
+)
+private val EXTRA_COLORS = listOf(
+    Color(0xFFFF5722), Color(0xFF00BCD4), Color(0xFFE91E63),
+    Color(0xFF607D8B), Color(0xFF795548), Color(0xFF009688)
+)
+
+private fun typeColor(type: String, index: Int): Color =
+    TYPE_COLORS[type] ?: EXTRA_COLORS[index % EXTRA_COLORS.size]
 
 @Composable
 fun InvestmentsScreen(
@@ -28,6 +46,7 @@ fun InvestmentsScreen(
     viewModel: InvestmentsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val customTypes by viewModel.customTypes.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
     var editTarget by remember { mutableStateOf<InvestmentEntity?>(null) }
     var showUpdatePriceFor by remember { mutableStateOf<InvestmentEntity?>(null) }
@@ -45,6 +64,9 @@ fun InvestmentsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { PortfolioSummaryCard(state) }
+            if (state.typeBreakdown.isNotEmpty()) {
+                item { PortfolioTypeChart(state.typeBreakdown) }
+            }
             items(state.investments, key = { it.id }) { inv ->
                 InvestmentCard(
                     investment = inv,
@@ -60,6 +82,7 @@ fun InvestmentsScreen(
     if (showAddDialog) {
         InvestmentDialog(
             investment = editTarget,
+            customTypes = customTypes,
             onDismiss = { showAddDialog = false },
             onSave = { inv ->
                 if (editTarget == null) viewModel.insert(inv) else viewModel.update(inv)
@@ -107,6 +130,54 @@ private fun PortfolioSummaryCard(state: InvestmentsUiState) {
 }
 
 @Composable
+private fun PortfolioTypeChart(breakdown: List<Pair<String, Double>>) {
+    val total = breakdown.sumOf { it.second }
+    val donutData = breakdown.mapIndexed { i, (type, value) -> typeColor(type, i) to value }
+
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text("Allocation by Type", style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                DonutChart(
+                    data = donutData,
+                    modifier = Modifier.size(130.dp)
+                )
+                Spacer(Modifier.width(20.dp))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    breakdown.forEachIndexed { i, (type, value) ->
+                        val color = typeColor(type, i)
+                        val pct = if (total > 0) value / total * 100 else 0.0
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(Modifier.size(10.dp).background(color, CircleShape))
+                            Column {
+                                Text(type, style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Medium)
+                                Text(
+                                    "${String.format("%.1f", pct)}%  ·  ${CurrencyFormatter.format(value)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun InvestmentCard(
     investment: InvestmentEntity,
     onViewDetail: () -> Unit,
@@ -137,7 +208,7 @@ private fun InvestmentCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(
-                        investment.type.replace('_', ' ').lowercase().replaceFirstChar { it.titlecase() },
+                        investment.type,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -179,12 +250,12 @@ private fun InvestmentCard(
 @Composable
 private fun InvestmentDialog(
     investment: InvestmentEntity?,
+    customTypes: List<String>,
     onDismiss: () -> Unit,
     onSave: (InvestmentEntity) -> Unit
 ) {
-    val predefinedTypes = listOf("Stock", "Bond", "Gold", "Other")
-    val initialType = investment?.type ?: "Stock"
-    val isInitiallyCustom = initialType !in predefinedTypes
+    val initialType = investment?.type ?: "STOCK"
+    val isInitiallyCustom = initialType !in PREDEFINED_TYPES
 
     var name by remember { mutableStateOf(investment?.name ?: "") }
     var ticker by remember { mutableStateOf(investment?.ticker ?: "") }
@@ -213,12 +284,22 @@ private fun InvestmentDialog(
                         modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
-                        predefinedTypes.forEach { t ->
+                        PREDEFINED_TYPES.forEach { t ->
                             DropdownMenuItem(
                                 text = { Text(t) },
                                 onClick = { selectedType = t; typeExpanded = false }
                             )
                         }
+                        if (customTypes.isNotEmpty()) {
+                            HorizontalDivider()
+                            customTypes.forEach { t ->
+                                DropdownMenuItem(
+                                    text = { Text(t) },
+                                    onClick = { selectedType = t; typeExpanded = false }
+                                )
+                            }
+                        }
+                        HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Custom…") },
                             onClick = { selectedType = "Custom"; typeExpanded = false }

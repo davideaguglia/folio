@@ -15,6 +15,7 @@ class InvestmentRepository @Inject constructor(
 ) {
     fun getAll(): Flow<List<InvestmentEntity>> = investmentDao.getAll()
     fun getTotalPortfolioValue(): Flow<Double> = investmentDao.getTotalPortfolioValue()
+    fun getDistinctTypes(): Flow<List<String>> = investmentDao.getDistinctTypes()
     suspend fun getById(id: Long): InvestmentEntity? = investmentDao.getById(id)
 
     fun getPriceHistory(investmentId: Long): Flow<List<InvestmentPriceEntity>> =
