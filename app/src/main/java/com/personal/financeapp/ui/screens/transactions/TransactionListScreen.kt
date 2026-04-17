@@ -2,6 +2,7 @@ package com.personal.financeapp.ui.screens.transactions
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -94,7 +95,10 @@ fun TransactionListScreen(
                     Text("No transactions yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 88.dp)
+                ) {
                     items(state.transactions, key = { it.transaction.id }) { item ->
                         SwipeToDismissTransactionItem(
                             item = item,
@@ -164,7 +168,9 @@ private fun TransactionItem(item: TransactionWithDetails, onClick: () -> Unit) {
     val dateStr = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(tx.date))
 
     ListItem(
-        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() },
         headlineContent = {
             Text(
                 item.category?.name ?: "Uncategorized",
