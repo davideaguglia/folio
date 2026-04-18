@@ -98,7 +98,7 @@ fun DashboardScreen(
                     AtelierCard {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                "THIS MONTH · NET FLOW",
+                                "NET FLOW · THIS MONTH",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -108,51 +108,59 @@ fun DashboardScreen(
                                 style = MaterialTheme.typography.displayMedium,
                                 color = if (balance >= 0) IncomeGreen else Terra
                             )
-                            Spacer(Modifier.height(16.dp))
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            Spacer(Modifier.height(14.dp))
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Box(Modifier.size(6.dp).background(IncomeGreen, CircleShape))
-                                        Text(
-                                            "EARNED",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = IncomeGreen
-                                        )
-                                    }
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        CurrencyFormatter.format(state.monthlyIncome),
-                                        style = MaterialTheme.typography.headlineSmall
-                                    )
-                                }
-                                VerticalDivider(
-                                    modifier = Modifier.height(44.dp).padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Box(Modifier.size(6.dp).background(Terra, CircleShape))
-                                        Text(
-                                            "SPENT",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Terra
-                                        )
-                                    }
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        CurrencyFormatter.format(state.monthlyExpense),
-                                        style = MaterialTheme.typography.headlineSmall
-                                    )
-                                }
+                        }
+                    }
+                }
+            }
+
+            // ── Earned / Spent side-by-side ──────────────────────
+            item {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Earned card
+                    OutlinedCard(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Box(Modifier.size(6.dp).background(IncomeGreen, CircleShape))
+                                Text("EARNED", style = MaterialTheme.typography.labelSmall, color = IncomeGreen)
                             }
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                CurrencyFormatter.format(state.monthlyIncome),
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                        }
+                    }
+                    // Spent card
+                    OutlinedCard(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Box(Modifier.size(6.dp).background(Terra, CircleShape))
+                                Text("SPENT", style = MaterialTheme.typography.labelSmall, color = Terra)
+                            }
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                CurrencyFormatter.format(state.monthlyExpense),
+                                style = MaterialTheme.typography.headlineSmall
+                            )
                         }
                     }
                 }

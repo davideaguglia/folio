@@ -1,20 +1,34 @@
 package com.personal.financeapp.ui.screens.transactions
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.financeapp.data.local.entity.TransactionEntity
+import com.personal.financeapp.ui.theme.Forest
+import com.personal.financeapp.ui.theme.GoldTone
+import com.personal.financeapp.ui.theme.Terra
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -31,7 +45,6 @@ fun AddEditTransactionScreen(
         state.transactions.find { it.transaction.id == transactionId }?.transaction
     }
 
-    // Mutable form state — all start at sensible defaults
     var type            by remember { mutableStateOf("EXPENSE") }
     var amount          by remember { mutableStateOf("") }
     var description     by remember { mutableStateOf("") }
@@ -41,7 +54,6 @@ fun AddEditTransactionScreen(
     var isRecurring     by remember { mutableStateOf(false) }
     var recurringPeriod by remember { mutableStateOf("MONTHLY") }
 
-    // Populate the form exactly once when the existing transaction is loaded from DB
     var formInitialized by remember { mutableStateOf(false) }
     LaunchedEffect(existing) {
         if (existing != null && !formInitialized) {
@@ -57,19 +69,22 @@ fun AddEditTransactionScreen(
         }
     }
 
-    var showDatePicker    by remember { mutableStateOf(false) }
-    var categoryExpanded  by remember { mutableStateOf(false) }
-    var accountExpanded   by remember { mutableStateOf(false) }
-    var periodExpanded    by remember { mutableStateOf(false) }
+    var showDatePicker   by remember { mutableStateOf(false) }
+    var categoryExpanded by remember { mutableStateOf(false) }
+    var accountExpanded  by remember { mutableStateOf(false) }
+    var periodExpanded   by remember { mutableStateOf(false) }
 
-    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("EEE, MMM dd · HH:mm", Locale.getDefault()) }
+    val eyebrowDateFormat = remember { SimpleDateFormat("MMMM dd · EEEE", Locale.getDefault()) }
     val filteredCategories = state.categories.filter { it.type == type }
 
-    // Auto-select first category only if none is selected and we are NOT editing
     LaunchedEffect(type, filteredCategories) {
         if (selectedCategoryId == 0L && filteredCategories.isNotEmpty()) {
             selectedCategoryId = filteredCategories.first().id
         }
+    }
+    LaunchedEffect(type) {
+        if (!isEditing) selectedCategoryId = 0L
     }
     LaunchedEffect(state.accounts) {
         if (selectedAccountId == 0L && state.accounts.isNotEmpty()) {
@@ -77,194 +92,403 @@ fun AddEditTransactionScreen(
         }
     }
 
+    val selectedCategory = filteredCategories.find { it.id == selectedCategoryId }
+    val selectedAccount  = state.accounts.find { it.id == selectedAccountId }
+
+    val amountColor = when (type) {
+        "INCOME" -> Forest
+        else     -> MaterialTheme.colorScheme.onSurface
+    }
+
+    val canSave = amount.toDoubleOrNull() != null && selectedCategoryId != 0L && selectedAccountId != 0L
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (isEditing) "Edit Transaction" else "Add Transaction") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
-                    }
-                }
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Type toggle
+            // ── Header ────────────────────────────────────────────
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 12.dp, top = 14.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
             ) {
-                listOf("EXPENSE", "INCOME").forEach { t ->
-                    FilterChip(
-                        selected = type == t,
-                        onClick = {
-                            type = t
-                            // Reset category selection when type switches
-                            if (!isEditing) selectedCategoryId = 0L
-                        },
-                        label = { Text(t.replaceFirstChar { it.titlecase() }) },
-                        modifier = Modifier.weight(1f)
+                Column {
+                    Text(
+                        eyebrowDateFormat.format(Date(selectedDate)).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        if (isEditing) "Edit entry" else "New entry",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        val amountVal = amount.toDoubleOrNull() ?: return@IconButton
+                        val nextDate = if (isRecurring) calculateNextDate(selectedDate, recurringPeriod) else null
+                        val entity = TransactionEntity(
+                            id = if (isEditing) transactionId else 0L,
+                            amount = amountVal,
+                            type = type,
+                            categoryId = selectedCategoryId,
+                            accountId = selectedAccountId,
+                            date = selectedDate,
+                            description = description,
+                            isRecurring = isRecurring,
+                            recurringPeriod = if (isRecurring) recurringPeriod else null,
+                            recurringNextDate = nextDate
+                        )
+                        if (isEditing) viewModel.update(entity) else viewModel.insert(entity)
+                        onNavigateBack()
+                    },
+                    enabled = canSave,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(if (canSave) Forest else MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Icon(
+                        Icons.Default.Check, "Save",
+                        tint = if (canSave) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            // Amount
-            OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it },
-                label = { Text("Amount (€)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                prefix = { Text("€") }
-            )
-
-            // Category
-            ExposedDropdownMenuBox(
-                expanded = categoryExpanded,
-                onExpandedChange = { categoryExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = filteredCategories.find { it.id == selectedCategoryId }?.name
-                        ?: "Select category",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Category") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(categoryExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = categoryExpanded,
-                    onDismissRequest = { categoryExpanded = false }
-                ) {
-                    filteredCategories.forEach { cat ->
-                        DropdownMenuItem(
-                            text = { Text(cat.name) },
-                            onClick = { selectedCategoryId = cat.id; categoryExpanded = false }
-                        )
-                    }
-                }
-            }
-
-            // Account
-            ExposedDropdownMenuBox(
-                expanded = accountExpanded,
-                onExpandedChange = { accountExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = state.accounts.find { it.id == selectedAccountId }?.name
-                        ?: "Select account",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Account") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(accountExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = accountExpanded,
-                    onDismissRequest = { accountExpanded = false }
-                ) {
-                    state.accounts.forEach { acc ->
-                        DropdownMenuItem(
-                            text = { Text(acc.name) },
-                            onClick = { selectedAccountId = acc.id; accountExpanded = false }
-                        )
-                    }
-                }
-            }
-
-            // Date
-            OutlinedTextField(
-                value = dateFormat.format(Date(selectedDate)),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Date") },
-                trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(Icons.Default.CalendarMonth, "Pick date")
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Description
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Notes (optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
-
-            // Recurring
+            // ── Segmented type selector ───────────────────────────
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(100.dp))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Text("Recurring transaction", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = isRecurring, onCheckedChange = { isRecurring = it })
+                listOf("EXPENSE" to "Expense", "INCOME" to "Income").forEach { (k, label) ->
+                    val selected = type == k
+                    val segBg = when {
+                        selected && k == "INCOME"   -> Forest
+                        selected && k == "EXPENSE"  -> Terra
+                        else                        -> Color.Transparent
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(segBg)
+                            .clickable { type = k; if (!isEditing) selectedCategoryId = 0L }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = when {
+                                selected -> MaterialTheme.colorScheme.onPrimary
+                                else     -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                }
             }
 
-            if (isRecurring) {
-                ExposedDropdownMenuBox(
-                    expanded = periodExpanded,
-                    onExpandedChange = { periodExpanded = it }
+            // ── Amount display ────────────────────────────────────
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 28.dp, horizontal = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "AMOUNT",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        "€",
+                        fontSize = 32.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp, end = 4.dp)
+                    )
+                    Text(
+                        if (amount.isEmpty()) "0" else amount,
+                        fontSize = 64.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Normal,
+                        letterSpacing = (-1).sp,
+                        color = amountColor,
+                        lineHeight = 64.sp
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                // Quick-add chips
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(Modifier.weight(1f))
+                    listOf("5", "10", "20", "50", "100").forEach { quick ->
+                        OutlinedButton(
+                            onClick = {
+                                val cur = amount.toDoubleOrNull() ?: 0.0
+                                amount = (cur + quick.toDouble()).let {
+                                    if (it == it.toLong().toDouble()) it.toLong().toString()
+                                    else it.toString()
+                                }
+                            },
+                            shape = RoundedCornerShape(100.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Text("€$quick", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                }
+            }
+
+            // ── Field card ────────────────────────────────────────
+            OutlinedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                // Amount field (editable text)
+                FieldRow(
+                    label = "AMOUNT",
+                    value = if (amount.isEmpty()) "Enter amount" else "€ $amount",
+                    muted = amount.isEmpty()
                 ) {
                     OutlinedTextField(
-                        value = recurringPeriod.replaceFirstChar { it.titlecase() },
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Repeats") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(periodExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        value = amount,
+                        onValueChange = { v ->
+                            if (v.matches(Regex("[0-9]*\\.?[0-9]*"))) amount = v
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        label = { Text("Amount (€)") },
+                        prefix = { Text("€") }
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+
+                // Category
+                ExposedDropdownMenuBox(
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = it }
+                ) {
+                    FieldRowClickable(
+                        label = "CATEGORY",
+                        value = selectedCategory?.name ?: "Select category",
+                        muted = selectedCategory == null,
+                        leading = selectedCategory?.color?.let { hex ->
+                            val c = runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(Forest)
+                            @Composable { Box(Modifier.size(8.dp).background(c, CircleShape)) }
+                        },
+                        modifier = Modifier.menuAnchor()
                     )
                     ExposedDropdownMenu(
-                        expanded = periodExpanded,
-                        onDismissRequest = { periodExpanded = false }
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false }
                     ) {
-                        listOf("DAILY", "WEEKLY", "MONTHLY", "YEARLY").forEach { p ->
+                        filteredCategories.forEach { cat ->
                             DropdownMenuItem(
-                                text = { Text(p.replaceFirstChar { it.titlecase() }) },
-                                onClick = { recurringPeriod = p; periodExpanded = false }
+                                text = { Text(cat.name) },
+                                onClick = { selectedCategoryId = cat.id; categoryExpanded = false }
                             )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+
+                // Account
+                ExposedDropdownMenuBox(
+                    expanded = accountExpanded,
+                    onExpandedChange = { accountExpanded = it }
+                ) {
+                    FieldRowClickable(
+                        label = "ACCOUNT",
+                        value = selectedAccount?.name ?: "Select account",
+                        muted = selectedAccount == null,
+                        modifier = Modifier.menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false }
+                    ) {
+                        state.accounts.forEach { acc ->
+                            DropdownMenuItem(
+                                text = { Text(acc.name) },
+                                onClick = { selectedAccountId = acc.id; accountExpanded = false }
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+
+                // Date
+                FieldRowClickable(
+                    label = "DATE",
+                    value = dateFormat.format(Date(selectedDate)),
+                    onClick = { showDatePicker = true }
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+
+                // Note
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                    Text(
+                        "NOTE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = {
+                            Text("Add a note…", fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        },
+                        maxLines = 3,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+
+                // Recurring
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            "RECURRING",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            if (isRecurring) recurringPeriod.lowercase()
+                                .replaceFirstChar { it.titlecase() }
+                            else "Does not repeat",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isRecurring) MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = isRecurring,
+                        onCheckedChange = { isRecurring = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Forest, checkedTrackColor = Forest.copy(alpha = 0.3f))
+                    )
+                }
+
+                if (isRecurring) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                    ExposedDropdownMenuBox(
+                        expanded = periodExpanded,
+                        onExpandedChange = { periodExpanded = it }
+                    ) {
+                        FieldRowClickable(
+                            label = "REPEATS",
+                            value = recurringPeriod.lowercase().replaceFirstChar { it.titlecase() },
+                            modifier = Modifier.menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = periodExpanded,
+                            onDismissRequest = { periodExpanded = false }
+                        ) {
+                            listOf("DAILY", "WEEKLY", "MONTHLY", "YEARLY").forEach { p ->
+                                DropdownMenuItem(
+                                    text = { Text(p.lowercase().replaceFirstChar { it.titlecase() }) },
+                                    onClick = { recurringPeriod = p; periodExpanded = false }
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Button(
-                onClick = {
-                    val amountVal = amount.toDoubleOrNull() ?: return@Button
-                    val nextDate = if (isRecurring) calculateNextDate(selectedDate, recurringPeriod) else null
-                    val entity = TransactionEntity(
-                        id = if (isEditing) transactionId else 0L,
-                        amount = amountVal,
-                        type = type,
-                        categoryId = selectedCategoryId,
-                        accountId = selectedAccountId,
-                        date = selectedDate,
-                        description = description,
-                        isRecurring = isRecurring,
-                        recurringPeriod = if (isRecurring) recurringPeriod else null,
-                        recurringNextDate = nextDate
-                    )
-                    if (isEditing) viewModel.update(entity) else viewModel.insert(entity)
-                    onNavigateBack()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = amount.toDoubleOrNull() != null
-                        && selectedCategoryId != 0L
-                        && selectedAccountId != 0L
+            Spacer(Modifier.weight(1f).defaultMinSize(minHeight = 24.dp))
+
+            // ── Bottom buttons ────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .navigationBarsPadding(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(if (isEditing) "Update" else "Save Transaction")
+                OutlinedButton(
+                    onClick = onNavigateBack,
+                    shape = RoundedCornerShape(100.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    modifier = Modifier.weight(1f).height(52.dp)
+                ) {
+                    Text("Cancel", style = MaterialTheme.typography.labelLarge)
+                }
+                Button(
+                    onClick = {
+                        val amountVal = amount.toDoubleOrNull() ?: return@Button
+                        val nextDate = if (isRecurring) calculateNextDate(selectedDate, recurringPeriod) else null
+                        val entity = TransactionEntity(
+                            id = if (isEditing) transactionId else 0L,
+                            amount = amountVal,
+                            type = type,
+                            categoryId = selectedCategoryId,
+                            accountId = selectedAccountId,
+                            date = selectedDate,
+                            description = description,
+                            isRecurring = isRecurring,
+                            recurringPeriod = if (isRecurring) recurringPeriod else null,
+                            recurringNextDate = nextDate
+                        )
+                        if (isEditing) viewModel.update(entity) else viewModel.insert(entity)
+                        onNavigateBack()
+                    },
+                    shape = RoundedCornerShape(100.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Forest),
+                    modifier = Modifier.weight(2f).height(52.dp),
+                    enabled = canSave
+                ) {
+                    Text(
+                        if (isEditing) "Update entry" else "Save entry",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
@@ -283,6 +507,64 @@ fun AddEditTransactionScreen(
                 TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
             }
         ) { DatePicker(state = pickerState) }
+    }
+}
+
+@Composable
+private fun FieldRow(
+    label: String,
+    value: String,
+    muted: Boolean = false,
+    content: (@Composable () -> Unit)? = null
+) {
+    if (content != null) {
+        content()
+    } else {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(3.dp))
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun FieldRowClickable(
+    label: String,
+    value: String,
+    muted: Boolean = false,
+    leading: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(3.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (leading != null) leading()
+                Text(
+                    value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+        Icon(
+            Icons.Default.ArrowForwardIos, null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

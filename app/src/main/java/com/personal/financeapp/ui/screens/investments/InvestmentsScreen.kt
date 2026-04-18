@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.financeapp.data.local.entity.InvestmentEntity
@@ -162,7 +163,12 @@ private fun PortfolioTypeChart(breakdown: List<Pair<String, Double>>) {
     val total = breakdown.sumOf { it.second }
     val donutData = breakdown.mapIndexed { i, (type, value) -> typeColor(type, i) to value }
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text("Allocation by Type", style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold)
@@ -205,6 +211,15 @@ private fun PortfolioTypeChart(breakdown: List<Pair<String, Double>>) {
     }
 }
 
+private val TYPE_BG = mapOf(
+    "CRYPTO" to Color(0xFFFDE4CD),
+    "ETF"    to Color(0xFFD9E4D1),
+    "STOCK"  to Color(0xFFE1DCF0),
+    "BOND"   to Color(0xFFD1E4E0),
+    "GOLD"   to Color(0xFFF5E9CC),
+)
+private fun typeBg(type: String) = TYPE_BG[type] ?: Color(0xFFE8E8E8)
+
 @Composable
 private fun InvestmentCard(
     investment: InvestmentEntity,
@@ -216,7 +231,13 @@ private fun InvestmentCard(
     val value = investment.currentPrice * investment.quantity
     val cost = investment.purchasePrice * investment.quantity
     val gainLoss = value - cost
-    val gainColor = if (gainLoss >= 0) IncomeGreen else ExpenseRed
+    val gainPct = if (cost > 0) (gainLoss / cost) * 100 else 0.0
+    val positive = gainLoss >= 0
+    val gainColor = if (positive) IncomeGreen else ExpenseRed
+
+    val abbrev = investment.ticker.take(2).ifBlank {
+        investment.name.take(2).uppercase()
+    }
 
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -225,53 +246,80 @@ private fun InvestmentCard(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Type-colored abbreviation box
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(typeBg(investment.type), RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(investment.name, style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold)
-                    if (investment.ticker.isNotBlank()) {
-                        Text(investment.ticker, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                Text(
+                    abbrev,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            // Name + ticker + type
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        investment.ticker.ifBlank { investment.name },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
                     Text(
                         investment.type,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 0.8.sp
                     )
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(CurrencyFormatter.format(value), fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "${if (gainLoss >= 0) "+" else ""}${CurrencyFormatter.format(gainLoss)}",
-                        color = gainColor, style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                Text(
+                    investment.name,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
             }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("${investment.quantity} units × ${CurrencyFormatter.format(investment.currentPrice)}",
+            // Value + gain
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    CurrencyFormatter.format(value),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row {
-                    IconButton(onClick = onUpdatePrice, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Update, "Update price", modifier = Modifier.size(18.dp))
-                    }
-                    IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Edit, "Edit", modifier = Modifier.size(18.dp))
-                    }
-                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Delete, "Delete", modifier = Modifier.size(18.dp))
-                    }
-                }
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    "${if (positive) "+" else ""}${String.format("%.2f", gainPct)}%",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = gainColor,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+        // Actions row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 66.dp, end = 4.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = onUpdatePrice, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Update, "Update price", modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Edit, "Edit", modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Delete, "Delete", modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

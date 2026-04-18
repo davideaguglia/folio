@@ -141,6 +141,60 @@ fun TransactionListScreen(
                 }
             }
 
+            // ── Net flow summary strip ────────────────────────────
+            if (state.transactions.isNotEmpty()) {
+                item {
+                    val income = state.transactions.filter { it.transaction.type == "INCOME" }
+                        .sumOf { it.transaction.amount }
+                    val expense = state.transactions.filter { it.transaction.type == "EXPENSE" }
+                        .sumOf { it.transaction.amount }
+                    val net = income - expense
+                    val monthLabel = remember {
+                        java.text.SimpleDateFormat("MMMM", java.util.Locale.getDefault())
+                            .format(java.util.Date())
+                    }
+                    OutlinedCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "NET FLOW · ${monthLabel.uppercase()}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    CurrencyFormatter.formatWithSign(net, net >= 0),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = if (net >= 0) Forest else MaterialTheme.colorScheme.error
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    "In  ${CurrencyFormatter.format(income)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Forest
+                                )
+                                Text(
+                                    "Out ${CurrencyFormatter.format(expense)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Terra
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             if (state.transactions.isEmpty()) {
                 item {
                     Box(
