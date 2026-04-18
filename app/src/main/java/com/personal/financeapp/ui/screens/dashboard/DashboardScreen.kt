@@ -69,7 +69,7 @@ fun DashboardScreen(
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
                         .statusBarsPadding()
-                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 16.dp),
+                        .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {

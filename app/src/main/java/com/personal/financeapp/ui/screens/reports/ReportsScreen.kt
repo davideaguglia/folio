@@ -50,7 +50,7 @@ fun ReportsScreen(
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
                     .statusBarsPadding()
-                    .padding(start = 4.dp, end = 4.dp, top = 14.dp, bottom = 8.dp)
+                    .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 8.dp)
             ) {
                 Text(
                     "ANALYTICS",

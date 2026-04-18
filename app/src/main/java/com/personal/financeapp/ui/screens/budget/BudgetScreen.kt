@@ -71,7 +71,7 @@ fun BudgetScreen(viewModel: BudgetViewModel = hiltViewModel()) {
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
                         .statusBarsPadding()
-                        .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 16.dp)
+                        .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp)
                 ) {
                     Text(
                         "$daysLeft DAYS REMAINING",

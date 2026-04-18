@@ -72,7 +72,7 @@ fun TransactionListScreen(
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
                         .statusBarsPadding()
-                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
+                        .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
