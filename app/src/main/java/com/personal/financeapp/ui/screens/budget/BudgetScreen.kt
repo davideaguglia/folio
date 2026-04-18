@@ -70,7 +70,6 @@ fun BudgetScreen(viewModel: BudgetViewModel = hiltViewModel()) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
-                        .statusBarsPadding()
                         .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp)
                 ) {
                     Text(
