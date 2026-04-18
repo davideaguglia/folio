@@ -305,9 +305,8 @@ fun AddEditTransactionScreen(
                         label = "CATEGORY",
                         value = selectedCategory?.name ?: "Select category",
                         muted = selectedCategory == null,
-                        leading = selectedCategory?.color?.let { hex ->
-                            val c = runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(Forest)
-                            @Composable { Box(Modifier.size(8.dp).background(c, CircleShape)) }
+                        leadingColor = selectedCategory?.color?.let { hex ->
+                            runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull()
                         },
                         modifier = Modifier.menuAnchor()
                     )
@@ -537,7 +536,7 @@ private fun FieldRowClickable(
     label: String,
     value: String,
     muted: Boolean = false,
-    leading: (@Composable () -> Unit)? = null,
+    leadingColor: Color? = null,
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -552,7 +551,9 @@ private fun FieldRowClickable(
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(3.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (leading != null) leading()
+                if (leadingColor != null) {
+                    Box(Modifier.size(8.dp).background(leadingColor, CircleShape))
+                }
                 Text(
                     value,
                     style = MaterialTheme.typography.bodyMedium,
