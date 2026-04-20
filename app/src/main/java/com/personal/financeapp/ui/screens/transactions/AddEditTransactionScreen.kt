@@ -297,57 +297,25 @@ fun AddEditTransactionScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
                 // Category
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { categoryExpanded = true }
-                ) {
-                    FieldRowClickable(
-                        label = "CATEGORY",
-                        value = selectedCategory?.name ?: "Select category",
-                        muted = selectedCategory == null,
-                        leadingColor = selectedCategory?.color?.let { hex ->
-                            runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull()
-                        }
-                    )
-                    DropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        filteredCategories.forEach { cat ->
-                            DropdownMenuItem(
-                                text = { Text(cat.name) },
-                                onClick = { selectedCategoryId = cat.id; categoryExpanded = false }
-                            )
-                        }
-                    }
-                }
+                FieldRowClickable(
+                    label = "CATEGORY",
+                    value = selectedCategory?.name ?: "Select category",
+                    muted = selectedCategory == null,
+                    leadingColor = selectedCategory?.color?.let { hex ->
+                        runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull()
+                    },
+                    onClick = { categoryExpanded = true }
+                )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
                 // Account
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { accountExpanded = true }
-                ) {
-                    FieldRowClickable(
-                        label = "ACCOUNT",
-                        value = selectedAccount?.name ?: "Select account",
-                        muted = selectedAccount == null
-                    )
-                    DropdownMenu(
-                        expanded = accountExpanded,
-                        onDismissRequest = { accountExpanded = false }
-                    ) {
-                        state.accounts.forEach { acc ->
-                            DropdownMenuItem(
-                                text = { Text(acc.name) },
-                                onClick = { selectedAccountId = acc.id; accountExpanded = false }
-                            )
-                        }
-                    }
-                }
+                FieldRowClickable(
+                    label = "ACCOUNT",
+                    value = selectedAccount?.name ?: "Select account",
+                    muted = selectedAccount == null,
+                    onClick = { accountExpanded = true }
+                )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
@@ -416,27 +384,11 @@ fun AddEditTransactionScreen(
 
                 if (isRecurring) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { periodExpanded = true }
-                    ) {
-                        FieldRowClickable(
-                            label = "REPEATS",
-                            value = recurringPeriod.lowercase().replaceFirstChar { it.titlecase() }
-                        )
-                        DropdownMenu(
-                            expanded = periodExpanded,
-                            onDismissRequest = { periodExpanded = false }
-                        ) {
-                            listOf("DAILY", "WEEKLY", "MONTHLY", "YEARLY").forEach { p ->
-                                DropdownMenuItem(
-                                    text = { Text(p.lowercase().replaceFirstChar { it.titlecase() }) },
-                                    onClick = { recurringPeriod = p; periodExpanded = false }
-                                )
-                            }
-                        }
-                    }
+                    FieldRowClickable(
+                        label = "REPEATS",
+                        value = recurringPeriod.lowercase().replaceFirstChar { it.titlecase() },
+                        onClick = { periodExpanded = true }
+                    )
                 }
             }
 
@@ -507,6 +459,54 @@ fun AddEditTransactionScreen(
             }
         ) { DatePicker(state = pickerState) }
     }
+
+    if (categoryExpanded) {
+        PickerDialog(
+            title = "Select category",
+            onDismiss = { categoryExpanded = false }
+        ) {
+            filteredCategories.forEach { cat ->
+                PickerRow(
+                    label = cat.name,
+                    leadingColor = cat.color.let { hex ->
+                        runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull()
+                    },
+                    selected = cat.id == selectedCategoryId,
+                    onClick = { selectedCategoryId = cat.id; categoryExpanded = false }
+                )
+            }
+        }
+    }
+
+    if (accountExpanded) {
+        PickerDialog(
+            title = "Select account",
+            onDismiss = { accountExpanded = false }
+        ) {
+            state.accounts.forEach { acc ->
+                PickerRow(
+                    label = acc.name,
+                    selected = acc.id == selectedAccountId,
+                    onClick = { selectedAccountId = acc.id; accountExpanded = false }
+                )
+            }
+        }
+    }
+
+    if (periodExpanded) {
+        PickerDialog(
+            title = "Repeats",
+            onDismiss = { periodExpanded = false }
+        ) {
+            listOf("DAILY", "WEEKLY", "MONTHLY", "YEARLY").forEach { p ->
+                PickerRow(
+                    label = p.lowercase().replaceFirstChar { it.titlecase() },
+                    selected = p == recurringPeriod,
+                    onClick = { recurringPeriod = p; periodExpanded = false }
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -566,6 +566,64 @@ private fun FieldRowClickable(
             modifier = Modifier.size(14.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+private fun PickerDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                content = content
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        }
+    )
+}
+
+@Composable
+private fun PickerRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    leadingColor: Color? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        if (leadingColor != null) {
+            Box(Modifier.size(10.dp).background(leadingColor, CircleShape))
+        }
+        Text(
+            label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+        )
+        if (selected) {
+            Icon(
+                Icons.Default.Check, null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
