@@ -297,10 +297,7 @@ fun AddEditTransactionScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
                 // Category
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = it }
-                ) {
+                Box {
                     FieldRowClickable(
                         label = "CATEGORY",
                         value = selectedCategory?.name ?: "Select category",
@@ -308,9 +305,9 @@ fun AddEditTransactionScreen(
                         leadingColor = selectedCategory?.color?.let { hex ->
                             runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull()
                         },
-                        modifier = Modifier.menuAnchor()
+                        onClick = { categoryExpanded = true }
                     )
-                    ExposedDropdownMenu(
+                    DropdownMenu(
                         expanded = categoryExpanded,
                         onDismissRequest = { categoryExpanded = false }
                     ) {
@@ -326,17 +323,14 @@ fun AddEditTransactionScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
                 // Account
-                ExposedDropdownMenuBox(
-                    expanded = accountExpanded,
-                    onExpandedChange = { accountExpanded = it }
-                ) {
+                Box {
                     FieldRowClickable(
                         label = "ACCOUNT",
                         value = selectedAccount?.name ?: "Select account",
                         muted = selectedAccount == null,
-                        modifier = Modifier.menuAnchor()
+                        onClick = { accountExpanded = true }
                     )
-                    ExposedDropdownMenu(
+                    DropdownMenu(
                         expanded = accountExpanded,
                         onDismissRequest = { accountExpanded = false }
                     ) {
@@ -416,16 +410,13 @@ fun AddEditTransactionScreen(
 
                 if (isRecurring) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-                    ExposedDropdownMenuBox(
-                        expanded = periodExpanded,
-                        onExpandedChange = { periodExpanded = it }
-                    ) {
+                    Box {
                         FieldRowClickable(
                             label = "REPEATS",
                             value = recurringPeriod.lowercase().replaceFirstChar { it.titlecase() },
-                            modifier = Modifier.menuAnchor()
+                            onClick = { periodExpanded = true }
                         )
-                        ExposedDropdownMenu(
+                        DropdownMenu(
                             expanded = periodExpanded,
                             onDismissRequest = { periodExpanded = false }
                         ) {
