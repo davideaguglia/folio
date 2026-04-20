@@ -297,15 +297,18 @@ fun AddEditTransactionScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
                 // Category
-                Box {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { categoryExpanded = true }
+                ) {
                     FieldRowClickable(
                         label = "CATEGORY",
                         value = selectedCategory?.name ?: "Select category",
                         muted = selectedCategory == null,
                         leadingColor = selectedCategory?.color?.let { hex ->
                             runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull()
-                        },
-                        onClick = { categoryExpanded = true }
+                        }
                     )
                     DropdownMenu(
                         expanded = categoryExpanded,
@@ -323,12 +326,15 @@ fun AddEditTransactionScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
                 // Account
-                Box {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { accountExpanded = true }
+                ) {
                     FieldRowClickable(
                         label = "ACCOUNT",
                         value = selectedAccount?.name ?: "Select account",
-                        muted = selectedAccount == null,
-                        onClick = { accountExpanded = true }
+                        muted = selectedAccount == null
                     )
                     DropdownMenu(
                         expanded = accountExpanded,
@@ -410,11 +416,14 @@ fun AddEditTransactionScreen(
 
                 if (isRecurring) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-                    Box {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { periodExpanded = true }
+                    ) {
                         FieldRowClickable(
                             label = "REPEATS",
-                            value = recurringPeriod.lowercase().replaceFirstChar { it.titlecase() },
-                            onClick = { periodExpanded = true }
+                            value = recurringPeriod.lowercase().replaceFirstChar { it.titlecase() }
                         )
                         DropdownMenu(
                             expanded = periodExpanded,
