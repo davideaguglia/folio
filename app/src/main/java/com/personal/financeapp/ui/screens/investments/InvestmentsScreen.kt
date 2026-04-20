@@ -53,6 +53,8 @@ fun InvestmentsScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editTarget by remember { mutableStateOf<InvestmentEntity?>(null) }
     var showUpdatePriceFor by remember { mutableStateOf<InvestmentEntity?>(null) }
+    var showSetCashDialog by remember { mutableStateOf(false) }
+    var cashInput by remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -87,6 +89,14 @@ fun InvestmentsScreen(
                 }
             }
             item { PortfolioSummaryCard(state) }
+            item {
+                CashAvailableCard(state, onSetCash = {
+                    cashInput = state.initialCash.let {
+                        if (it == 0.0) "" else it.toBigDecimal().stripTrailingZeros().toPlainString()
+                    }
+                    showSetCashDialog = true
+                })
+            }
             if (state.typeBreakdown.isNotEmpty()) {
                 item { PortfolioTypeChart(state.typeBreakdown) }
             }
@@ -123,6 +133,86 @@ fun InvestmentsScreen(
                 showUpdatePriceFor = null
             }
         )
+    }
+
+    if (showSetCashDialog) {
+        AlertDialog(
+            onDismissRequest = { showSetCashDialog = false },
+            title = { Text("Set starting cash") },
+            text = {
+                Column {
+                    Text(
+                        "Enter your current cash on hand. Income and expenses will adjust this automatically.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = cashInput,
+                        onValueChange = { if (it.matches(Regex("[0-9]*\\.?[0-9]*"))) cashInput = it },
+                        label = { Text("Amount (€)") },
+                        prefix = { Text("€") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    cashInput.toDoubleOrNull()?.let { viewModel.setInitialCash(it) }
+                    showSetCashDialog = false
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSetCashDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+}
+
+@Composable
+private fun CashAvailableCard(state: InvestmentsUiState, onSetCash: () -> Unit) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+        onClick = onSetCash
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "CASH AVAILABLE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    CurrencyFormatter.format(state.cashAvailable),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (state.cashAvailable >= 0) IncomeGreen else ExpenseRed
+                )
+                if (state.initialCash > 0) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Starting: ${CurrencyFormatter.format(state.initialCash)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Icon(
+                Icons.Default.Edit, "Set cash",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
+        }
     }
 }
 

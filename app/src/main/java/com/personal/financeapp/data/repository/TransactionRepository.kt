@@ -21,6 +21,8 @@ class TransactionRepository @Inject constructor(private val dao: TransactionDao)
     fun getSumByType(type: String, from: Long, to: Long): Flow<Double> =
         dao.getSumByType(type, from, to)
 
+    fun getSumByTypeAllTime(type: String): Flow<Double> = dao.getSumByTypeAllTime(type)
+
     fun getCategoryTotals(from: Long, to: Long): Flow<List<CategoryTotal>> =
         dao.getCategoryTotals(from, to)
 

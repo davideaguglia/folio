@@ -25,4 +25,5 @@ object DatabaseModule {
     @Provides fun provideInvestmentDao(db: AppDatabase): InvestmentDao = db.investmentDao()
     @Provides fun provideInvestmentPriceDao(db: AppDatabase): InvestmentPriceDao = db.investmentPriceDao()
     @Provides fun provideNetWorthDao(db: AppDatabase): NetWorthDao = db.netWorthDao()
+    @Provides fun provideCashSettingsDao(db: AppDatabase): CashSettingsDao = db.cashSettingsDao()
 }

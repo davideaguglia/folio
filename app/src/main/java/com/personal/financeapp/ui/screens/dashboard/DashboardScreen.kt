@@ -286,11 +286,14 @@ private fun TxRow(item: TransactionWithDetails, last: Boolean) {
                     fontWeight = FontWeight.Medium,
                     maxLines = 1
                 )
-                Text(
-                    item.account?.name ?: "—",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (tx.description.isNotBlank()) {
+                    Text(
+                        tx.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
             }
             Text(
                 CurrencyFormatter.formatWithSign(tx.amount, isIncome),

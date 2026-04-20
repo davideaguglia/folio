@@ -36,6 +36,9 @@ interface TransactionDao {
     @Query("SELECT COALESCE(SUM(amount), 0.0) FROM transactions WHERE type = :type AND date BETWEEN :from AND :to")
     fun getSumByType(type: String, from: Long, to: Long): Flow<Double>
 
+    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM transactions WHERE type = :type")
+    fun getSumByTypeAllTime(type: String): Flow<Double>
+
     @Query("SELECT categoryId, SUM(amount) as total FROM transactions WHERE type = 'EXPENSE' AND date BETWEEN :from AND :to GROUP BY categoryId")
     fun getCategoryTotals(from: Long, to: Long): Flow<List<CategoryTotal>>
 

@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
@@ -32,12 +31,9 @@ import java.util.*
 
 @Composable
 fun ReportsScreen(
-    viewModel: ReportsViewModel = hiltViewModel(),
-    totalAccountsBalance: Double = 0.0,
-    totalPortfolioValue: Double = 0.0
+    viewModel: ReportsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var showSnapshotDialog by remember { mutableStateOf(false) }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
     LazyColumn(
@@ -78,32 +74,9 @@ fun ReportsScreen(
                 }
             }
         }
-        item { NetWorthHistoryCard(state, onRecordSnapshot = { showSnapshotDialog = true }) }
+        item { NetWorthHistoryCard(state) }
     }
     } // Scaffold
-
-    if (showSnapshotDialog) {
-        AlertDialog(
-            onDismissRequest = { showSnapshotDialog = false },
-            title = { Text("Record Net Worth") },
-            text = {
-                Column {
-                    Text("This will save a snapshot of your current net worth.")
-                    Spacer(Modifier.height(8.dp))
-                    Text("Make sure your account balances and investment prices are up to date.")
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val assets = totalAccountsBalance.coerceAtLeast(0.0) + totalPortfolioValue
-                    val liabilities = (-totalAccountsBalance).coerceAtLeast(0.0)
-                    viewModel.recordNetWorthSnapshot(assets, liabilities)
-                    showSnapshotDialog = false
-                }) { Text("Record") }
-            },
-            dismissButton = { TextButton(onClick = { showSnapshotDialog = false }) { Text("Cancel") } }
-        )
-    }
 }
 
 @Composable
@@ -250,7 +223,7 @@ private fun CategoryBreakdownCard(state: ReportsUiState) {
 }
 
 @Composable
-private fun NetWorthHistoryCard(state: ReportsUiState, onRecordSnapshot: () -> Unit) {
+private fun NetWorthHistoryCard(state: ReportsUiState) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -258,23 +231,15 @@ private fun NetWorthHistoryCard(state: ReportsUiState, onRecordSnapshot: () -> U
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Net Worth Over Time", style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold)
-                IconButton(onClick = onRecordSnapshot) {
-                    Icon(Icons.Default.Add, "Record snapshot")
-                }
-            }
+            Text("Net Worth Over Time", style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(8.dp))
             if (state.netWorthHistory.size < 2) {
                 Box(
                     modifier = Modifier.fillMaxWidth().height(120.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Record at least 2 snapshots to see the chart",
+                    Text("Add transactions to see your net worth trend",
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
@@ -286,7 +251,7 @@ private fun NetWorthHistoryCard(state: ReportsUiState, onRecordSnapshot: () -> U
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    val fmt = SimpleDateFormat("MMM yy", Locale.getDefault())
+                    val fmt = SimpleDateFormat("MMM dd", Locale.getDefault())
                     Text(fmt.format(Date(state.netWorthHistory.first().date)),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -300,19 +265,11 @@ private fun NetWorthHistoryCard(state: ReportsUiState, onRecordSnapshot: () -> U
                 HorizontalDivider()
                 Spacer(Modifier.height(8.dp))
                 val latest = state.netWorthHistory.last()
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("Latest Net Worth", style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(CurrencyFormatter.format(latest.netWorth), fontWeight = FontWeight.SemiBold)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("Assets / Liabilities", style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("${CurrencyFormatter.format(latest.totalAssets)} / ${CurrencyFormatter.format(latest.totalLiabilities)}",
-                            style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
+                Text("Current net worth", style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(CurrencyFormatter.format(latest.netWorth),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold)
             }
         }
     }

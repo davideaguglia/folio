@@ -18,9 +18,10 @@ import kotlinx.coroutines.launch
         TransactionEntity::class,
         InvestmentEntity::class,
         InvestmentPriceEntity::class,
-        NetWorthSnapshotEntity::class
+        NetWorthSnapshotEntity::class,
+        CashSettingsEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun investmentDao(): InvestmentDao
     abstract fun investmentPriceDao(): InvestmentPriceDao
     abstract fun netWorthDao(): NetWorthDao
+    abstract fun cashSettingsDao(): CashSettingsDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -37,6 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getInstance(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(context, AppDatabase::class.java, "finance_db")
+                    .fallbackToDestructiveMigration()
                     .addCallback(SeedCallback())
                     .build()
                     .also { INSTANCE = it }
@@ -87,6 +90,10 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private fun seedAccount(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "INSERT INTO accounts (name, type, initialBalance, color, icon) VALUES (?, 'CREDIT_CARD', 0.0, ?, ?)",
+                arrayOf("Card", "#5C6BC0", "credit_card")
+            )
             db.execSQL(
                 "INSERT INTO accounts (name, type, initialBalance, color, icon) VALUES (?, 'CASH', 0.0, ?, ?)",
                 arrayOf("Cash", "#4CAF50", "account_balance_wallet")

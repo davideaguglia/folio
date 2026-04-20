@@ -88,7 +88,8 @@ fun AddEditTransactionScreen(
     }
     LaunchedEffect(state.accounts) {
         if (selectedAccountId == 0L && state.accounts.isNotEmpty()) {
-            selectedAccountId = state.accounts.first().id
+            selectedAccountId = (state.accounts.firstOrNull { it.type == "CREDIT_CARD" }
+                ?: state.accounts.first()).id
         }
     }
 

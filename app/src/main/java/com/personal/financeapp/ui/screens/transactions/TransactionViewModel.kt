@@ -8,6 +8,7 @@ import com.personal.financeapp.data.local.entity.CategoryEntity
 import com.personal.financeapp.data.local.entity.TransactionEntity
 import com.personal.financeapp.data.repository.AccountRepository
 import com.personal.financeapp.data.repository.CategoryRepository
+import com.personal.financeapp.data.repository.NetWorthService
 import com.personal.financeapp.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -26,7 +27,8 @@ data class TransactionUiState(
 class TransactionViewModel @Inject constructor(
     private val transactionRepo: TransactionRepository,
     private val categoryRepo: CategoryRepository,
-    private val accountRepo: AccountRepository
+    private val accountRepo: AccountRepository,
+    private val netWorthService: NetWorthService
 ) : ViewModel() {
 
     private val filterType = MutableStateFlow<String?>(null)
@@ -51,13 +53,16 @@ class TransactionViewModel @Inject constructor(
 
     fun insert(transaction: TransactionEntity) = viewModelScope.launch {
         transactionRepo.insert(transaction)
+        netWorthService.refreshSnapshot()
     }
 
     fun update(transaction: TransactionEntity) = viewModelScope.launch {
         transactionRepo.update(transaction)
+        netWorthService.refreshSnapshot()
     }
 
     fun delete(transaction: TransactionEntity) = viewModelScope.launch {
         transactionRepo.delete(transaction)
+        netWorthService.refreshSnapshot()
     }
 }
