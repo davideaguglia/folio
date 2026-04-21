@@ -10,7 +10,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import com.personal.financeapp.data.repository.NetWorthService
 import com.personal.financeapp.ui.navigation.AppNavigation
-import com.personal.financeapp.ui.theme.FinanceAppTheme
+import com.personal.financeapp.ui.theme.FolioTheme
 import com.personal.financeapp.ui.theme.ThemeViewModel
 import com.personal.financeapp.worker.RecurringTransactionWorker
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
-            FinanceAppTheme(darkTheme = isDarkTheme) {
+            FolioTheme(darkTheme = isDarkTheme) {
                 AppNavigation(
                     isDarkTheme = isDarkTheme,
                     onToggleTheme = { themeViewModel.toggleTheme() }
