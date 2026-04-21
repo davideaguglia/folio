@@ -12,6 +12,7 @@ import com.personal.financeapp.data.repository.NetWorthService
 import com.personal.financeapp.ui.navigation.AppNavigation
 import com.personal.financeapp.ui.theme.FolioTheme
 import com.personal.financeapp.ui.theme.ThemeViewModel
+import com.personal.financeapp.worker.PriceSyncWorker
 import com.personal.financeapp.worker.RecurringTransactionWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         RecurringTransactionWorker.enqueue(this)
+        PriceSyncWorker.enqueue(this)
         lifecycleScope.launch { netWorthService.refreshSnapshot() }
         enableEdgeToEdge()
         setContent {
