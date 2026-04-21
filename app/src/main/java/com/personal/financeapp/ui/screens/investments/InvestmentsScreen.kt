@@ -387,7 +387,6 @@ private fun InvestmentDialog(
     var selectedType   by remember { mutableStateOf(investment?.type ?: "STOCK") }
     var customTypeName by remember { mutableStateOf("") }
     var quantity       by remember { mutableStateOf(investment?.quantity?.toString() ?: "") }
-    var purchasePrice  by remember { mutableStateOf(investment?.purchasePrice?.toString() ?: "") }
     var manualPrice    by remember { mutableStateOf(investment?.currentPrice?.toString() ?: "") }
     var autoFetch      by remember { mutableStateOf(investment?.autoFetch ?: false) }
     var currency       by remember { mutableStateOf(investment?.currency ?: "EUR") }
@@ -410,7 +409,7 @@ private fun InvestmentDialog(
                        else manualPrice.toDoubleOrNull() ?: (investment?.currentPrice ?: 0.0)
 
     val canSave = name.isNotBlank() && quantity.toDoubleOrNull() != null &&
-                  purchasePrice.toDoubleOrNull() != null && effectiveType.isNotBlank()
+                  currentPrice > 0.0 && effectiveType.isNotBlank()
 
     AlertDialog(
         onDismissRequest = { onDismiss(); onResetLookup() },
@@ -537,11 +536,6 @@ private fun InvestmentDialog(
                     label = { Text("Quantity") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
 
-                // ── Purchase price ────────────────────────────────────────
-                OutlinedTextField(value = purchasePrice, onValueChange = { purchasePrice = it },
-                    label = { Text("Purchase price per unit") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), prefix = { Text("€") })
-
                 // ── Current price (manual only when not auto-fetch) ───────
                 if (found == null || !autoFetch) {
                     OutlinedTextField(value = manualPrice, onValueChange = { manualPrice = it },
@@ -584,7 +578,7 @@ private fun InvestmentDialog(
                         ticker = tickerInput.trim(),
                         type = effectiveType,
                         quantity = quantity.toDoubleOrNull() ?: 0.0,
-                        purchasePrice = purchasePrice.toDoubleOrNull() ?: 0.0,
+                        purchasePrice = investment?.purchasePrice ?: currentPrice,
                         currentPrice = currentPrice,
                         purchaseDate = investment?.purchaseDate ?: System.currentTimeMillis(),
                         notes = investment?.notes ?: "",
