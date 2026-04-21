@@ -25,6 +25,7 @@ import com.personal.financeapp.ui.components.MonthlyBarData
 import com.personal.financeapp.ui.theme.ChartColors
 import com.personal.financeapp.ui.theme.ExpenseRed
 import com.personal.financeapp.ui.theme.IncomeGreen
+import com.personal.financeapp.ui.theme.Terra
 import com.personal.financeapp.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.*
@@ -57,6 +58,7 @@ fun ReportsScreen(
                 Text("Reports", style = MaterialTheme.typography.headlineLarge)
             }
         }
+        item { NetWorthHeroCard(state.netWorthHistory.lastOrNull()?.netWorth ?: 0.0) }
         item { MonthSelector(state, onMonthChange = { m, y -> viewModel.selectMonth(m, y) }) }
         item { MonthlyBarChartCard(state.monthlyData) }
         if (state.categoryBreakdown.isNotEmpty()) {
@@ -77,6 +79,30 @@ fun ReportsScreen(
         item { NetWorthHistoryCard(state) }
     }
     } // Scaffold
+}
+
+@Composable
+private fun NetWorthHeroCard(netWorth: Double) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                "NET WORTH",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                CurrencyFormatter.format(netWorth),
+                style = MaterialTheme.typography.displayMedium,
+                color = if (netWorth >= 0) IncomeGreen else Terra
+            )
+        }
+    }
 }
 
 @Composable
@@ -259,17 +285,6 @@ private fun NetWorthHistoryCard(state: ReportsUiState) {
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-            }
-            if (state.netWorthHistory.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider()
-                Spacer(Modifier.height(8.dp))
-                val latest = state.netWorthHistory.last()
-                Text("Current net worth", style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(CurrencyFormatter.format(latest.netWorth),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold)
             }
         }
     }
