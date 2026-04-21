@@ -476,7 +476,7 @@ private fun InvestmentDialog(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error)
                         is TickerLookupState.Error ->
-                            Text("Network error — fill in details manually below.",
+                            Text("Error: ${(tickerLookup as TickerLookupState.Error).message} — fill in details manually below.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error)
                         else -> {}

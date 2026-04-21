@@ -3,6 +3,7 @@ package com.personal.financeapp.data.remote
 import com.personal.financeapp.data.local.entity.InvestmentEntity
 import com.personal.financeapp.data.repository.InvestmentRepository
 import com.personal.financeapp.data.repository.NetWorthService
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,12 +26,12 @@ class PriceFetchService @Inject constructor(
 ) {
     suspend fun lookup(ticker: String): TickerResult {
         return try {
-            val response = api.getQuote(ticker.trim().uppercase())
-            val result = response.quoteResponse.result?.firstOrNull()
-            if (result == null || result.regularMarketPrice == null) {
+            val response = api.getChart(ticker.trim().uppercase())
+            val meta = response.chart.result?.firstOrNull()?.meta
+            if (meta == null || meta.regularMarketPrice == null) {
                 TickerResult.NotFound
             } else {
-                val type = when (result.quoteType?.uppercase()) {
+                val type = when (meta.instrumentType?.uppercase()) {
                     "EQUITY"         -> "STOCK"
                     "ETF"            -> "ETF"
                     "CRYPTOCURRENCY" -> "CRYPTO"
@@ -38,14 +39,17 @@ class PriceFetchService @Inject constructor(
                     else             -> "OTHER"
                 }
                 TickerResult.Found(
-                    name = result.longName ?: result.shortName ?: ticker,
-                    price = result.regularMarketPrice,
-                    currency = result.currency ?: "USD",
+                    name = meta.longName ?: meta.shortName ?: ticker.uppercase(),
+                    price = meta.regularMarketPrice,
+                    currency = meta.currency ?: "USD",
                     type = type
                 )
             }
+        } catch (e: HttpException) {
+            if (e.code() == 404) TickerResult.NotFound
+            else TickerResult.Error("HTTP ${e.code()} — ${e.message()}")
         } catch (e: Exception) {
-            TickerResult.Error(e.message ?: "Network error")
+            TickerResult.Error(e.message ?: e.javaClass.simpleName)
         }
     }
 

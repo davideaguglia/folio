@@ -1,19 +1,28 @@
 package com.personal.financeapp.data.remote.dto
 
-data class YahooQuoteResponse(
-    val quoteResponse: QuoteResponse
+data class YahooChartResponse(
+    val chart: ChartResponse
 )
 
-data class QuoteResponse(
-    val result: List<QuoteResult>?,
-    val error: Any?
+data class ChartResponse(
+    val result: List<ChartResult>?,
+    val error: ChartError?
 )
 
-data class QuoteResult(
-    val symbol: String,
-    val longName: String?,
-    val shortName: String?,
-    val regularMarketPrice: Double?,
+data class ChartResult(
+    val meta: ChartMeta
+)
+
+data class ChartMeta(
+    val symbol: String?,
     val currency: String?,
-    val quoteType: String?
+    val regularMarketPrice: Double?,
+    val instrumentType: String?,
+    val longName: String?,
+    val shortName: String?
+)
+
+data class ChartError(
+    val code: String?,
+    val description: String?
 )
