@@ -30,4 +30,14 @@ class InvestmentRepository @Inject constructor(
         val investment = investmentDao.getById(investmentId) ?: return
         investmentDao.update(investment.copy(currentPrice = price))
     }
+
+    suspend fun recordPriceWithMeta(investmentId: Long, price: Double, currency: String, date: Long) {
+        priceDao.insert(InvestmentPriceEntity(investmentId = investmentId, price = price, date = date))
+        val investment = investmentDao.getById(investmentId) ?: return
+        investmentDao.update(investment.copy(
+            currentPrice = price,
+            currency = currency,
+            lastFetchedAt = date
+        ))
+    }
 }

@@ -13,5 +13,8 @@ data class InvestmentEntity(
     val purchasePrice: Double, // per unit, EUR
     val currentPrice: Double,  // per unit, EUR — updated manually
     val purchaseDate: Long,
-    val notes: String = ""
+    val notes: String = "",
+    val autoFetch: Boolean = false,      // true = refresh price from API automatically
+    val currency: String = "EUR",         // native currency returned by the price API
+    val lastFetchedAt: Long? = null       // epoch ms of last successful price fetch
 )
