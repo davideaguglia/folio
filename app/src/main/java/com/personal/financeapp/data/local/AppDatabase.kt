@@ -47,11 +47,17 @@ abstract class AppDatabase : RoomDatabase() {
     }
 
     private class SeedCallback : Callback() {
-        override fun onCreate(db: SupportSQLiteDatabase) {
-            super.onCreate(db)
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
             CoroutineScope(Dispatchers.IO).launch {
-                seedCategories(db)
-                seedAccount(db)
+                val cursor = db.query("SELECT COUNT(*) FROM categories")
+                cursor.moveToFirst()
+                val count = cursor.getInt(0)
+                cursor.close()
+                if (count == 0) {
+                    seedCategories(db)
+                    seedAccount(db)
+                }
             }
         }
 

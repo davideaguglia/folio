@@ -65,4 +65,19 @@ class TransactionViewModel @Inject constructor(
         transactionRepo.delete(transaction)
         netWorthService.refreshSnapshot()
     }
+
+    fun insertCategory(name: String, type: String) = viewModelScope.launch {
+        val colors = listOf("#F44336","#2196F3","#FF9800","#4CAF50","#9C27B0","#00BCD4","#FF5722","#3F51B5")
+        categoryRepo.insert(CategoryEntity(name = name, type = type, color = colors.random(), icon = "label", monthlyBudget = null))
+    }
+
+    fun insertAccount(name: String, type: String) = viewModelScope.launch {
+        val color = when (type) {
+            "CREDIT_CARD" -> "#5C6BC0"
+            "SAVINGS"     -> "#009688"
+            "CASH"        -> "#4CAF50"
+            else          -> "#2D5A3F"
+        }
+        accountRepo.insert(AccountEntity(name = name, type = type, initialBalance = 0.0, color = color, icon = "account_balance"))
+    }
 }

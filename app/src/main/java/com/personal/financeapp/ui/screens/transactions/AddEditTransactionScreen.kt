@@ -9,9 +9,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -69,10 +74,15 @@ fun AddEditTransactionScreen(
         }
     }
 
-    var showDatePicker   by remember { mutableStateOf(false) }
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var accountExpanded  by remember { mutableStateOf(false) }
-    var periodExpanded   by remember { mutableStateOf(false) }
+    var showDatePicker        by remember { mutableStateOf(false) }
+    var categoryExpanded      by remember { mutableStateOf(false) }
+    var accountExpanded       by remember { mutableStateOf(false) }
+    var periodExpanded        by remember { mutableStateOf(false) }
+    var showNewCategoryDialog by remember { mutableStateOf(false) }
+    var showNewAccountDialog  by remember { mutableStateOf(false) }
+    var newCategoryName       by remember { mutableStateOf("") }
+    var newAccountName        by remember { mutableStateOf("") }
+    var newAccountType        by remember { mutableStateOf("CHECKING") }
 
     val dateFormat = remember { SimpleDateFormat("EEE, MMM dd · HH:mm", Locale.getDefault()) }
     val eyebrowDateFormat = remember { SimpleDateFormat("MMMM dd · EEEE", Locale.getDefault()) }
@@ -311,20 +321,38 @@ fun AddEditTransactionScreen(
                         expanded = categoryExpanded,
                         onDismissRequest = { categoryExpanded = false }
                     ) {
-                        if (filteredCategories.isEmpty()) {
+                        filteredCategories.forEach { cat ->
+                            val catColor = runCatching {
+                                Color(android.graphics.Color.parseColor(cat.color))
+                            }.getOrElse { Forest }
+                            val isSelected = cat.id == selectedCategoryId
                             DropdownMenuItem(
-                                text = { Text("No categories — add one first") },
-                                onClick = { categoryExpanded = false },
-                                enabled = false
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Box(Modifier.size(8.dp).background(catColor, CircleShape))
+                                        Text(cat.name,
+                                            color = if (isSelected) Forest else MaterialTheme.colorScheme.onSurface,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal)
+                                    }
+                                },
+                                trailingIcon = if (isSelected) {{
+                                    Icon(Icons.Default.Check, null, modifier = Modifier.size(15.dp), tint = Forest)
+                                }} else null,
+                                onClick = { selectedCategoryId = cat.id; categoryExpanded = false }
                             )
-                        } else {
-                            filteredCategories.forEach { cat ->
-                                DropdownMenuItem(
-                                    text = { Text(cat.name) },
-                                    onClick = { selectedCategoryId = cat.id; categoryExpanded = false }
-                                )
-                            }
                         }
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = Forest)
+                                    Text("New category", color = Forest, fontWeight = FontWeight.Medium)
+                                }
+                            },
+                            onClick = { categoryExpanded = false; newCategoryName = ""; showNewCategoryDialog = true }
+                        )
                     }
                 }
 
@@ -342,20 +370,36 @@ fun AddEditTransactionScreen(
                         expanded = accountExpanded,
                         onDismissRequest = { accountExpanded = false }
                     ) {
-                        if (state.accounts.isEmpty()) {
+                        state.accounts.forEach { acc ->
+                            val isSelected = acc.id == selectedAccountId
                             DropdownMenuItem(
-                                text = { Text("No accounts — add one first") },
-                                onClick = { accountExpanded = false },
-                                enabled = false
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Icon(accountTypeIcon(acc.type), null, modifier = Modifier.size(16.dp),
+                                            tint = if (isSelected) Forest else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(acc.name,
+                                            color = if (isSelected) Forest else MaterialTheme.colorScheme.onSurface,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal)
+                                    }
+                                },
+                                trailingIcon = if (isSelected) {{
+                                    Icon(Icons.Default.Check, null, modifier = Modifier.size(15.dp), tint = Forest)
+                                }} else null,
+                                onClick = { selectedAccountId = acc.id; accountExpanded = false }
                             )
-                        } else {
-                            state.accounts.forEach { acc ->
-                                DropdownMenuItem(
-                                    text = { Text(acc.name) },
-                                    onClick = { selectedAccountId = acc.id; accountExpanded = false }
-                                )
-                            }
                         }
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = Forest)
+                                    Text("New account", color = Forest, fontWeight = FontWeight.Medium)
+                                }
+                            },
+                            onClick = { accountExpanded = false; newAccountName = ""; newAccountType = "CHECKING"; showNewAccountDialog = true }
+                        )
                     }
                 }
 
@@ -515,6 +559,83 @@ fun AddEditTransactionScreen(
         ) { DatePicker(state = pickerState) }
     }
 
+    if (showNewCategoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showNewCategoryDialog = false },
+            title = { Text("New category") },
+            text = {
+                OutlinedTextField(
+                    value = newCategoryName,
+                    onValueChange = { newCategoryName = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.insertCategory(newCategoryName.trim(), type)
+                        showNewCategoryDialog = false
+                    },
+                    enabled = newCategoryName.isNotBlank()
+                ) { Text("Create", color = Forest) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNewCategoryDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showNewAccountDialog) {
+        var typeExpanded by remember { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = { showNewAccountDialog = false },
+            title = { Text("New account") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = newAccountName,
+                        onValueChange = { newAccountName = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = newAccountType.replace('_', ' ').replaceFirstChar { it.titlecase() },
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Type") },
+                            trailingIcon = { Icon(Icons.Default.ArrowForwardIos, null, modifier = Modifier.size(14.dp)) },
+                            modifier = Modifier.fillMaxWidth().clickable { typeExpanded = true }
+                        )
+                        DropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                            listOf("CHECKING", "SAVINGS", "CASH", "CREDIT_CARD").forEach { t ->
+                                DropdownMenuItem(
+                                    text = { Text(t.replace('_', ' ').replaceFirstChar { it.titlecase() }) },
+                                    onClick = { newAccountType = t; typeExpanded = false }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.insertAccount(newAccountName.trim(), newAccountType)
+                        showNewAccountDialog = false
+                    },
+                    enabled = newAccountName.isNotBlank()
+                ) { Text("Create", color = Forest) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNewAccountDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
 }
 
 @Composable
@@ -575,6 +696,13 @@ private fun FieldRowClickable(
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+}
+
+private fun accountTypeIcon(type: String) = when (type) {
+    "CHECKING"    -> Icons.Default.AccountBalance
+    "SAVINGS"     -> Icons.Default.Savings
+    "CREDIT_CARD" -> Icons.Default.CreditCard
+    else          -> Icons.Default.AccountBalanceWallet
 }
 
 private fun calculateNextDate(from: Long, period: String): Long {
