@@ -61,7 +61,7 @@ class ReportsViewModel @Inject constructor(
             catMap[catId]?.let { CategoryBreakdown(it, amount, (amount / total).toFloat()) }
         }.sortedByDescending { it.amount }
 
-        ReportsUiState(monthlyData, breakdown, snapshots, month, year)
+        ReportsUiState(monthlyData, breakdown, deduplicateByDay(snapshots), month, year)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ReportsUiState())
 
     fun selectMonth(month: Int, year: Int) {
@@ -78,6 +78,17 @@ class ReportsViewModel @Inject constructor(
                 date = System.currentTimeMillis()
             )
         )
+    }
+
+    private fun deduplicateByDay(snapshots: List<NetWorthSnapshotEntity>): List<NetWorthSnapshotEntity> {
+        val cal = Calendar.getInstance()
+        return snapshots
+            .groupBy { snap ->
+                cal.timeInMillis = snap.date
+                Triple(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+            }
+            .map { (_, daySnaps) -> daySnaps.maxBy { it.date } }
+            .sortedBy { it.date }
     }
 
     private fun buildMonthlyData(
