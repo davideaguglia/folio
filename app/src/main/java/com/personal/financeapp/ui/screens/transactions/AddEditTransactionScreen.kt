@@ -8,6 +8,9 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
@@ -23,12 +26,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -116,6 +125,7 @@ fun AddEditTransactionScreen(
 
     val canSave = amount.toDoubleOrNull() != null && selectedCategoryId != 0L && selectedAccountId != 0L
     val focusManager = LocalFocusManager.current
+    val amountFocusRequester = remember { FocusRequester() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -234,7 +244,8 @@ fun AddEditTransactionScreen(
                 Spacer(Modifier.height(12.dp))
                 Row(
                     verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.clickable { amountFocusRequester.requestFocus() }
                 ) {
                     Text(
                         "€",
@@ -243,14 +254,43 @@ fun AddEditTransactionScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 6.dp, end = 4.dp)
                     )
-                    Text(
-                        if (amount.isEmpty()) "0" else amount,
-                        fontSize = 64.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Normal,
-                        letterSpacing = (-1).sp,
-                        color = amountColor,
-                        lineHeight = 64.sp
+                    BasicTextField(
+                        value = amount,
+                        onValueChange = { v -> if (v.matches(Regex("[0-9]*\\.?[0-9]*"))) amount = v },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                        textStyle = TextStyle(
+                            fontSize = 64.sp,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Normal,
+                            letterSpacing = (-1).sp,
+                            color = amountColor,
+                            lineHeight = 64.sp
+                        ),
+                        cursorBrush = SolidColor(amountColor),
+                        modifier = Modifier
+                            .focusRequester(amountFocusRequester)
+                            .widthIn(min = 72.dp),
+                        decorationBox = { innerTextField ->
+                            Box {
+                                if (amount.isEmpty()) {
+                                    Text(
+                                        "0",
+                                        fontSize = 64.sp,
+                                        fontFamily = FontFamily.Serif,
+                                        fontWeight = FontWeight.Normal,
+                                        letterSpacing = (-1).sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                        lineHeight = 64.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        }
                     )
                 }
                 Spacer(Modifier.height(16.dp))
@@ -291,26 +331,6 @@ fun AddEditTransactionScreen(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                // Amount field (editable text)
-                FieldRow(
-                    label = "AMOUNT",
-                    value = if (amount.isEmpty()) "Enter amount" else "€ $amount",
-                    muted = amount.isEmpty()
-                ) {
-                    OutlinedTextField(
-                        value = amount,
-                        onValueChange = { v ->
-                            if (v.matches(Regex("[0-9]*\\.?[0-9]*"))) amount = v
-                        },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                        label = { Text("Amount (€)") },
-                        prefix = { Text("€") }
-                    )
-                }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-
                 // Category
                 Box(modifier = Modifier.fillMaxWidth()) {
                     FieldRowClickable(
