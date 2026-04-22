@@ -12,11 +12,14 @@ sealed class TickerResult {
         val name: String,
         val price: Double,
         val currency: String,
-        val type: String
+        val type: String,
+        val ticker: String  // resolved symbol (may differ from input when ISIN was given)
     ) : TickerResult()
     object NotFound : TickerResult()
     data class Error(val message: String) : TickerResult()
 }
+
+private val ISIN_REGEX = Regex("^[A-Z]{2}[A-Z0-9]{10}$")
 
 @Singleton
 class PriceFetchService @Inject constructor(
@@ -24,9 +27,13 @@ class PriceFetchService @Inject constructor(
     private val investmentRepo: InvestmentRepository,
     private val netWorthService: NetWorthService
 ) {
-    suspend fun lookup(ticker: String): TickerResult {
+    suspend fun lookup(input: String): TickerResult {
         return try {
-            val response = api.getChart(ticker.trim().uppercase())
+            val query = input.trim().uppercase()
+            // If input looks like an ISIN, resolve it to a ticker first
+            val ticker = if (ISIN_REGEX.matches(query)) resolveIsin(query) ?: return TickerResult.NotFound
+                         else query
+            val response = api.getChart(ticker)
             val meta = response.chart.result?.firstOrNull()?.meta
             if (meta == null || meta.regularMarketPrice == null) {
                 TickerResult.NotFound
@@ -39,10 +46,11 @@ class PriceFetchService @Inject constructor(
                     else             -> "OTHER"
                 }
                 TickerResult.Found(
-                    name = meta.longName ?: meta.shortName ?: ticker.uppercase(),
-                    price = meta.regularMarketPrice,
+                    name     = meta.longName ?: meta.shortName ?: ticker,
+                    price    = meta.regularMarketPrice,
                     currency = meta.currency ?: "USD",
-                    type = type
+                    type     = type,
+                    ticker   = meta.symbol ?: ticker
                 )
             }
         } catch (e: HttpException) {
@@ -51,6 +59,14 @@ class PriceFetchService @Inject constructor(
         } catch (e: Exception) {
             TickerResult.Error(e.message ?: e.javaClass.simpleName)
         }
+    }
+
+    private suspend fun resolveIsin(isin: String): String? {
+        return try {
+            api.search(isin).quotes
+                ?.firstOrNull { !it.symbol.isNullOrBlank() }
+                ?.symbol
+        } catch (_: Exception) { null }
     }
 
     suspend fun fetchAndRecord(investment: InvestmentEntity) {

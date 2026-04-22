@@ -19,7 +19,7 @@ private val PREDEFINED_TYPES = setOf("STOCK", "BOND", "GOLD", "OTHER")
 sealed class TickerLookupState {
     object Idle : TickerLookupState()
     object Loading : TickerLookupState()
-    data class Found(val name: String, val price: Double, val currency: String, val type: String) : TickerLookupState()
+    data class Found(val name: String, val price: Double, val currency: String, val type: String, val ticker: String) : TickerLookupState()
     object NotFound : TickerLookupState()
     data class Error(val message: String) : TickerLookupState()
 }
@@ -83,7 +83,7 @@ class InvestmentsViewModel @Inject constructor(
     fun lookupTicker(ticker: String) = viewModelScope.launch {
         _tickerLookup.value = TickerLookupState.Loading
         _tickerLookup.value = when (val r = priceFetchService.lookup(ticker)) {
-            is TickerResult.Found   -> TickerLookupState.Found(r.name, r.price, r.currency, r.type)
+            is TickerResult.Found   -> TickerLookupState.Found(r.name, r.price, r.currency, r.type, r.ticker)
             is TickerResult.NotFound -> TickerLookupState.NotFound
             is TickerResult.Error   -> TickerLookupState.Error(r.message)
         }

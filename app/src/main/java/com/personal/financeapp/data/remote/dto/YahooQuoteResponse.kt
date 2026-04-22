@@ -26,3 +26,16 @@ data class ChartError(
     val code: String?,
     val description: String?
 )
+
+// Search endpoint DTOs (used for ISIN → ticker resolution)
+data class YahooSearchResponse(
+    val quotes: List<SearchQuote>?
+)
+
+data class SearchQuote(
+    val symbol: String?,
+    val shortname: String?,
+    val longname: String?,
+    val quoteType: String?,
+    val exchange: String?
+)

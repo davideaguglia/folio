@@ -399,6 +399,7 @@ private fun InvestmentDialog(
             selectedType = tickerLookup.type
             manualPrice = tickerLookup.price.toString()
             currency = tickerLookup.currency
+            tickerInput = tickerLookup.ticker  // use resolved symbol, not the original ISIN
             autoFetch = true
         }
     }
@@ -426,8 +427,8 @@ private fun InvestmentDialog(
                         OutlinedTextField(
                             value = tickerInput,
                             onValueChange = { tickerInput = it.uppercase(); onResetLookup() },
-                            label = { Text("Ticker symbol") },
-                            placeholder = { Text("AAPL, BTC-EUR…") },
+                            label = { Text("Ticker or ISIN") },
+                            placeholder = { Text("AAPL, BTC-EUR, US0378331005…") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
@@ -487,7 +488,7 @@ private fun InvestmentDialog(
                 // ── Ticker field (edit mode only) ─────────────────────────
                 if (isEditing) {
                     OutlinedTextField(value = tickerInput, onValueChange = { tickerInput = it.uppercase() },
-                        label = { Text("Ticker symbol") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                        label = { Text("Ticker") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 }
 
                 // ── Name ─────────────────────────────────────────────────
