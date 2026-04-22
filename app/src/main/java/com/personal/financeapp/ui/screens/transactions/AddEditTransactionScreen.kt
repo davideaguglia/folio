@@ -245,7 +245,9 @@ fun AddEditTransactionScreen(
                 Row(
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.clickable { amountFocusRequester.requestFocus() }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { amountFocusRequester.requestFocus() }
                 ) {
                     Text(
                         "€",
