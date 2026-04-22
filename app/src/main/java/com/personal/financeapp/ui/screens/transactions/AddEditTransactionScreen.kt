@@ -274,9 +274,7 @@ fun AddEditTransactionScreen(
                             lineHeight = 64.sp
                         ),
                         cursorBrush = SolidColor(amountColor),
-                        modifier = Modifier
-                            .focusRequester(amountFocusRequester)
-                            .widthIn(min = 72.dp),
+                        modifier = Modifier.focusRequester(amountFocusRequester),
                         decorationBox = { innerTextField ->
                             Box {
                                 if (amount.isEmpty()) {
