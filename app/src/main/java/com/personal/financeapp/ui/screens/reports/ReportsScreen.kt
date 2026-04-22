@@ -60,7 +60,6 @@ fun ReportsScreen(
         }
         item { NetWorthHeroCard(state.netWorthHistory.lastOrNull()?.netWorth ?: 0.0) }
         item { MonthSelector(state, onMonthChange = { m, y -> viewModel.selectMonth(m, y) }) }
-        item { MonthlyBarChartCard(state.monthlyData) }
         if (state.categoryBreakdown.isNotEmpty()) {
             item { CategoryBreakdownCard(state) }
         } else {
@@ -77,6 +76,7 @@ fun ReportsScreen(
             }
         }
         item { NetWorthHistoryCard(state) }
+        item { MonthlyBarChartCard(state.monthlyData) }
     }
     } // Scaffold
 }
@@ -178,7 +178,9 @@ private fun MonthlyBarChartCard(data: List<MonthlyData>) {
             } else {
                 BarChart(
                     data = data.map { MonthlyBarData(it.label, it.income, it.expense) },
-                    modifier = Modifier.fillMaxWidth().height(140.dp)
+                    modifier = Modifier.fillMaxWidth().height(140.dp),
+                    incomeColor = IncomeGreen,
+                    expenseColor = ExpenseRed
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
