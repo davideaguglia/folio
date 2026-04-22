@@ -428,7 +428,6 @@ private fun InvestmentDialog(
                             value = tickerInput,
                             onValueChange = { tickerInput = it.uppercase(); onResetLookup() },
                             label = { Text("Ticker or ISIN") },
-                            placeholder = { Text("AAPL, BTC-EUR, US0378331005…") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
