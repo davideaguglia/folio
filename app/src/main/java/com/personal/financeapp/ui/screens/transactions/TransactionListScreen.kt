@@ -2,8 +2,9 @@ package com.personal.financeapp.ui.screens.transactions
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -42,6 +43,8 @@ fun TransactionListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var searchVisible by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
+    val isSelecting = selectedIds.isNotEmpty()
 
     val groupedTx = remember(state.transactions) {
         state.transactions
@@ -53,12 +56,14 @@ fun TransactionListScreen(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddTransaction,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                elevation = FloatingActionButtonDefaults.elevation(8.dp)
-            ) { Icon(Icons.Default.Add, "Add") }
+            if (!isSelecting) {
+                FloatingActionButton(
+                    onClick = onAddTransaction,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp)
+                ) { Icon(Icons.Default.Add, "Add") }
+            }
         }
     ) { padding ->
         LazyColumn(
@@ -67,35 +72,73 @@ fun TransactionListScreen(
         ) {
             // ── Header ────────────────────────────────────────────
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Column {
+                if (isSelecting) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(start = 4.dp, end = 8.dp, top = 4.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { selectedIds = emptySet() }) {
+                            Icon(Icons.Default.Close, "Cancel selection",
+                                tint = MaterialTheme.colorScheme.onSurface)
+                        }
                         Text(
-                            "LEDGER",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            "${selectedIds.size} selected",
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.weight(1f)
                         )
-                        Spacer(Modifier.height(2.dp))
-                        Text("Transactions", style = MaterialTheme.typography.headlineLarge)
+                        IconButton(onClick = {
+                            val toDelete = state.transactions.filter { it.transaction.id in selectedIds }
+                            toDelete.forEach { viewModel.delete(it.transaction) }
+                            selectedIds = emptySet()
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "${toDelete.size} transaction${if (toDelete.size == 1) "" else "s"} deleted",
+                                    actionLabel = "Undo",
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    toDelete.forEach { viewModel.insert(it.transaction) }
+                                }
+                            }
+                        }) {
+                            Icon(Icons.Default.Delete, "Delete selected",
+                                tint = MaterialTheme.colorScheme.error)
+                        }
                     }
-                    IconButton(onClick = { searchVisible = !searchVisible }) {
-                        Icon(
-                            Icons.Default.Search, "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Column {
+                            Text(
+                                "LEDGER",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text("Transactions", style = MaterialTheme.typography.headlineLarge)
+                        }
+                        IconButton(onClick = { searchVisible = !searchVisible }) {
+                            Icon(
+                                Icons.Default.Search, "Search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
 
             // ── Search field ──────────────────────────────────────
             item {
-                AnimatedVisibility(searchVisible) {
+                AnimatedVisibility(searchVisible && !isSelecting) {
                     OutlinedTextField(
                         value = state.searchQuery,
                         onValueChange = { viewModel.setSearch(it) },
@@ -119,29 +162,31 @@ fun TransactionListScreen(
 
             // ── Filter pills ──────────────────────────────────────
             item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                ) {
-                    val filters = listOf(null to "All", "INCOME" to "Income", "EXPENSE" to "Expenses")
-                    items(filters) { (type, label) ->
-                        val selected = state.filterType == type
-                        FilterChip(
-                            selected = selected,
-                            onClick = { viewModel.setFilter(type) },
-                            label = { Text(label) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                AnimatedVisibility(!isSelecting) {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        val filters = listOf(null to "All", "INCOME" to "Income", "EXPENSE" to "Expenses")
+                        items(filters) { (type, label) ->
+                            val selected = state.filterType == type
+                            FilterChip(
+                                selected = selected,
+                                onClick = { viewModel.setFilter(type) },
+                                label = { Text(label) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
 
             // ── Net flow summary strip ────────────────────────────
-            if (state.transactions.isNotEmpty()) {
+            if (state.transactions.isNotEmpty() && !isSelecting) {
                 item {
                     val income = state.transactions.filter { it.transaction.type == "INCOME" }
                         .sumOf { it.transaction.amount }
@@ -228,23 +273,38 @@ fun TransactionListScreen(
                                 )
                             ) {
                                 txList.forEachIndexed { i, item ->
-                                    SwipeToDismissTransactionItem(
-                                        item = item,
-                                        onEdit = { onEditTransaction(item.transaction.id) },
-                                        onDelete = {
-                                            viewModel.delete(item.transaction)
-                                            scope.launch {
-                                                val result = snackbarHostState.showSnackbar(
-                                                    message = "Transaction deleted",
-                                                    actionLabel = "Undo",
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                                if (result == SnackbarResult.ActionPerformed) {
-                                                    viewModel.insert(item.transaction)
+                                    if (isSelecting) {
+                                        TransactionItem(
+                                            item = item,
+                                            isSelected = item.transaction.id in selectedIds,
+                                            onClick = {
+                                                selectedIds = if (item.transaction.id in selectedIds)
+                                                    selectedIds - item.transaction.id
+                                                else
+                                                    selectedIds + item.transaction.id
+                                            },
+                                            onLongClick = {}
+                                        )
+                                    } else {
+                                        SwipeToDismissTransactionItem(
+                                            item = item,
+                                            onEdit = { onEditTransaction(item.transaction.id) },
+                                            onDelete = {
+                                                viewModel.delete(item.transaction)
+                                                scope.launch {
+                                                    val result = snackbarHostState.showSnackbar(
+                                                        message = "Transaction deleted",
+                                                        actionLabel = "Undo",
+                                                        duration = SnackbarDuration.Short
+                                                    )
+                                                    if (result == SnackbarResult.ActionPerformed) {
+                                                        viewModel.insert(item.transaction)
+                                                    }
                                                 }
-                                            }
-                                        }
-                                    )
+                                            },
+                                            onLongClick = { selectedIds = setOf(item.transaction.id) }
+                                        )
+                                    }
                                     if (i != txList.lastIndex) HorizontalDivider(
                                         color = MaterialTheme.colorScheme.outlineVariant,
                                         thickness = 0.5.dp,
@@ -265,7 +325,8 @@ fun TransactionListScreen(
 private fun SwipeToDismissTransactionItem(
     item: TransactionWithDetails,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -291,12 +352,18 @@ private fun SwipeToDismissTransactionItem(
             }
         }
     ) {
-        TransactionItem(item = item, onClick = onEdit)
+        TransactionItem(item = item, isSelected = false, onClick = onEdit, onLongClick = onLongClick)
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun TransactionItem(item: TransactionWithDetails, onClick: () -> Unit) {
+private fun TransactionItem(
+    item: TransactionWithDetails,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
     val tx = item.transaction
     val isIncome = tx.type == "INCOME"
     val dateStr = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(tx.date))
@@ -304,8 +371,11 @@ private fun TransactionItem(item: TransactionWithDetails, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable { onClick() }
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                else MaterialTheme.colorScheme.surface
+            )
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -314,17 +384,27 @@ private fun TransactionItem(item: TransactionWithDetails, onClick: () -> Unit) {
             modifier = Modifier
                 .size(38.dp)
                 .background(
-                    if (isIncome) Forest.copy(alpha = 0.12f) else Terra.copy(alpha = 0.12f),
+                    when {
+                        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                        isIncome   -> Forest.copy(alpha = 0.12f)
+                        else       -> Terra.copy(alpha = 0.12f)
+                    },
                     CircleShape
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
-                contentDescription = null,
-                tint = if (isIncome) IncomeGreen else Terra,
-                modifier = Modifier.size(16.dp)
-            )
+            if (isSelected) {
+                Icon(Icons.Default.Check, null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp))
+            } else {
+                Icon(
+                    if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                    contentDescription = null,
+                    tint = if (isIncome) IncomeGreen else Terra,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
