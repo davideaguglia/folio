@@ -23,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.financeapp.data.local.entity.InvestmentEntity
 import com.personal.financeapp.ui.components.DonutChart
+import com.personal.financeapp.ui.theme.ChartColors
 import com.personal.financeapp.ui.theme.ExpenseRed
 import com.personal.financeapp.ui.theme.Forest
 import com.personal.financeapp.ui.theme.IncomeGreen
@@ -30,17 +31,20 @@ import com.personal.financeapp.util.CurrencyFormatter
 
 private val PREDEFINED_TYPES = listOf("STOCK", "ETF", "CRYPTO", "BOND", "GOLD", "OTHER")
 
+// Aligned with ChartColors Atelier palette from Color.kt
 private val TYPE_COLORS = mapOf(
-    "STOCK"  to Color(0xFF2196F3),
-    "ETF"    to Color(0xFF4CAF50),
-    "CRYPTO" to Color(0xFFFF9800),
-    "BOND"   to Color(0xFF009688),
-    "GOLD"   to Color(0xFFFFC107),
-    "OTHER"  to Color(0xFF9C27B0)
+    "STOCK"  to ChartColors[1], // steel blue
+    "ETF"    to ChartColors[6], // Forest
+    "CRYPTO" to ChartColors[2], // GoldTone
+    "BOND"   to ChartColors[5], // teal
+    "GOLD"   to ChartColors[0], // Terra
+    "OTHER"  to ChartColors[9]  // warm grey
 )
 private val EXTRA_COLORS = listOf(
-    Color(0xFFFF5722), Color(0xFF00BCD4), Color(0xFFE91E63),
-    Color(0xFF607D8B), Color(0xFF795548)
+    ChartColors[4], // plum
+    ChartColors[8], // sienna
+    ChartColors[7], // slate
+    ChartColors[3]  // Crimson
 )
 
 private fun typeColor(type: String, index: Int): Color =
@@ -291,12 +295,16 @@ private fun PortfolioTypeChart(breakdown: List<Pair<String, Double>>) {
     }
 }
 
+// Soft backgrounds — pastel versions of TYPE_COLORS to match Atelier palette
 private val TYPE_BG = mapOf(
-    "CRYPTO" to Color(0xFFFDE4CD), "ETF"   to Color(0xFFD9E4D1),
-    "STOCK"  to Color(0xFFE1DCF0), "BOND"  to Color(0xFFD1E4E0),
-    "GOLD"   to Color(0xFFF5E9CC)
+    "STOCK"  to Color(0xFFD5E2F5), // soft steel blue
+    "ETF"    to Color(0xFFCDE0CE), // ForestSoft
+    "CRYPTO" to Color(0xFFF0E5C8), // soft GoldTone
+    "BOND"   to Color(0xFFCCE5E4), // soft teal
+    "GOLD"   to Color(0xFFF1D7C4), // TerraSoft
+    "OTHER"  to Color(0xFFE5E4DD)  // soft warm grey
 )
-private fun typeBg(type: String) = TYPE_BG[type] ?: Color(0xFFE8E8E8)
+private fun typeBg(type: String) = TYPE_BG[type] ?: Color(0xFFE5E4DD)
 
 @Composable
 private fun InvestmentCard(
