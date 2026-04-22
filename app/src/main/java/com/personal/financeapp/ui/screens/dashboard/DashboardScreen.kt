@@ -21,7 +21,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.financeapp.data.local.dao.TransactionWithDetails
 import com.personal.financeapp.ui.components.DonutChart
-import com.personal.financeapp.ui.theme.ChartColors
 import com.personal.financeapp.ui.theme.Forest
 import com.personal.financeapp.ui.theme.IncomeGreen
 import com.personal.financeapp.ui.theme.Terra
@@ -226,17 +225,22 @@ private fun SpendingCard(expenses: List<CategoryExpense>) {
             Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DonutChart(
-                    data = expenses.mapIndexed { i, e -> ChartColors[i % ChartColors.size] to e.amount },
+                    data = expenses.map { e ->
+                        runCatching { Color(android.graphics.Color.parseColor(e.category.color)) }
+                            .getOrElse { Color.Gray } to e.amount
+                    },
                     modifier = Modifier.size(110.dp)
                 )
                 Column(
                     modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    expenses.take(5).forEachIndexed { i, exp ->
+                    expenses.take(5).forEach { exp ->
+                        val catColor = runCatching { Color(android.graphics.Color.parseColor(exp.category.color)) }
+                            .getOrElse { Color.Gray }
                         val pct = if (total > 0) exp.amount / total * 100 else 0.0
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(Modifier.size(8.dp).background(ChartColors[i % ChartColors.size], CircleShape))
+                            Box(Modifier.size(8.dp).background(catColor, CircleShape))
                             Text(exp.category.name, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
                             Text(
                                 "${String.format("%.0f", pct)}%",

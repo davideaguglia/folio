@@ -22,7 +22,6 @@ import com.personal.financeapp.ui.components.BarChart
 import com.personal.financeapp.ui.components.DonutChart
 import com.personal.financeapp.ui.components.LineChart
 import com.personal.financeapp.ui.components.MonthlyBarData
-import com.personal.financeapp.ui.theme.ChartColors
 import com.personal.financeapp.ui.theme.ExpenseRed
 import com.personal.financeapp.ui.theme.IncomeGreen
 import com.personal.financeapp.ui.theme.Terra
@@ -221,21 +220,26 @@ private fun CategoryBreakdownCard(state: ReportsUiState) {
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DonutChart(
-                    data = breakdown.mapIndexed { i, b -> ChartColors[i % ChartColors.size] to b.amount },
+                    data = breakdown.map { b ->
+                        runCatching { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(b.category.color)) }
+                            .getOrElse { androidx.compose.ui.graphics.Color.Gray } to b.amount
+                    },
                     modifier = Modifier.size(100.dp)
                 )
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    breakdown.take(6).forEachIndexed { i, item ->
+                    breakdown.take(6).forEach { item ->
+                        val catColor = runCatching { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(item.category.color)) }
+                            .getOrElse { androidx.compose.ui.graphics.Color.Gray }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Box(
                                 modifier = Modifier.size(10.dp).clip(CircleShape)
-                                    .background(ChartColors[i % ChartColors.size])
+                                    .background(catColor)
                             )
                             Text(item.category.name, modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodyMedium, maxLines = 1)

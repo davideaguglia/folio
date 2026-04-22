@@ -57,29 +57,55 @@ abstract class AppDatabase : RoomDatabase() {
                 if (count == 0) {
                     seedCategories(db)
                     seedAccount(db)
+                } else {
+                    syncCategoryColors(db)
                 }
+            }
+        }
+
+        // Keeps seeded category colors in sync across installs/updates
+        private fun syncCategoryColors(db: SupportSQLiteDatabase) {
+            val colors = mapOf(
+                "Food & Dining"      to "#C4683A",
+                "Transportation"     to "#4A6FA5",
+                "Housing"            to "#B08A3E",
+                "Healthcare"         to "#A94436",
+                "Entertainment"      to "#7B5EA7",
+                "Shopping"           to "#3E8A87",
+                "Education"          to "#2D5A3F",
+                "Travel"             to "#4A5F8A",
+                "Personal Care"      to "#9B6B4F",
+                "Other"              to "#7A7D6E",
+                "Salary"             to "#2D5A3F",
+                "Freelance"          to "#4D8060",
+                "Investment Returns" to "#B08A3E",
+                "Gift"               to "#B8864A",
+                "Other Income"       to "#7A6B52"
+            )
+            colors.forEach { (name, hex) ->
+                db.execSQL("UPDATE categories SET color = ? WHERE name = ?", arrayOf(hex, name))
             }
         }
 
         private fun seedCategories(db: SupportSQLiteDatabase) {
             val expenseCategories = listOf(
-                Triple("Food & Dining", "#F44336", "restaurant"),
-                Triple("Transportation", "#2196F3", "directions_car"),
-                Triple("Housing", "#FF9800", "home"),
-                Triple("Healthcare", "#E91E63", "favorite"),
-                Triple("Entertainment", "#9C27B0", "movie"),
-                Triple("Shopping", "#00BCD4", "shopping_cart"),
-                Triple("Education", "#009688", "school"),
-                Triple("Travel", "#3F51B5", "flight"),
-                Triple("Personal Care", "#FF5722", "person"),
-                Triple("Other", "#607D8B", "more_horiz")
+                Triple("Food & Dining",  "#C4683A", "restaurant"),
+                Triple("Transportation", "#4A6FA5", "directions_car"),
+                Triple("Housing",        "#B08A3E", "home"),
+                Triple("Healthcare",     "#A94436", "favorite"),
+                Triple("Entertainment",  "#7B5EA7", "movie"),
+                Triple("Shopping",       "#3E8A87", "shopping_cart"),
+                Triple("Education",      "#2D5A3F", "school"),
+                Triple("Travel",         "#4A5F8A", "flight"),
+                Triple("Personal Care",  "#9B6B4F", "person"),
+                Triple("Other",          "#7A7D6E", "more_horiz")
             )
             val incomeCategories = listOf(
-                Triple("Salary", "#4CAF50", "work"),
-                Triple("Freelance", "#8BC34A", "laptop"),
-                Triple("Investment Returns", "#CDDC39", "trending_up"),
-                Triple("Gift", "#FFC107", "card_giftcard"),
-                Triple("Other Income", "#795548", "add_circle")
+                Triple("Salary",             "#2D5A3F", "work"),
+                Triple("Freelance",          "#4D8060", "laptop"),
+                Triple("Investment Returns", "#B08A3E", "trending_up"),
+                Triple("Gift",               "#B8864A", "card_giftcard"),
+                Triple("Other Income",       "#7A6B52", "add_circle")
             )
             expenseCategories.forEach { (name, color, icon) ->
                 db.execSQL(

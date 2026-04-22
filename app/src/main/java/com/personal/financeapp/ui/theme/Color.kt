@@ -34,7 +34,14 @@ val WarningAmber     = GoldTone
 val InvestmentPurple = Color(0xFF5D4FB5)
 
 val ChartColors = listOf(
-    Color(0xFF4F7CFF), Color(0xFFC4683A), Color(0xFFF59E0B), Color(0xFFEC4899),
-    Color(0xFF8B5CF6), Color(0xFF06B6D4), Color(0xFFC8E85A), Color(0xFF94A3B8),
-    Color(0xFF2D5A3F), Color(0xFFB08A3E)
+    Color(0xFFC4683A), // Terra — food/warm
+    Color(0xFF4A6FA5), // steel blue — transport
+    Color(0xFFB08A3E), // GoldTone — housing
+    Color(0xFFA94436), // Crimson — healthcare
+    Color(0xFF7B5EA7), // plum — entertainment
+    Color(0xFF3E8A87), // teal — shopping
+    Color(0xFF2D5A3F), // Forest — education
+    Color(0xFF4A5F8A), // slate — travel
+    Color(0xFF9B6B4F), // sienna — personal care
+    Color(0xFF7A7D6E)  // warm grey — other
 )
