@@ -242,40 +242,42 @@ fun AddEditTransactionScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(12.dp))
-                Row(
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.Center,
+                BasicTextField(
+                    value = amount,
+                    onValueChange = { v -> if (v.matches(Regex("[0-9]*\\.?[0-9]*"))) amount = v },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    textStyle = TextStyle(
+                        fontSize = 64.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Normal,
+                        letterSpacing = (-1).sp,
+                        color = amountColor,
+                        lineHeight = 64.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    ),
+                    cursorBrush = SolidColor(amountColor),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { amountFocusRequester.requestFocus() }
-                ) {
-                    Text(
-                        "€",
-                        fontSize = 32.sp,
-                        fontFamily = FontFamily.Serif,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 6.dp, end = 4.dp)
-                    )
-                    BasicTextField(
-                        value = amount,
-                        onValueChange = { v -> if (v.matches(Regex("[0-9]*\\.?[0-9]*"))) amount = v },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        textStyle = TextStyle(
-                            fontSize = 64.sp,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Normal,
-                            letterSpacing = (-1).sp,
-                            color = amountColor,
-                            lineHeight = 64.sp
-                        ),
-                        cursorBrush = SolidColor(amountColor),
-                        modifier = Modifier.focusRequester(amountFocusRequester),
-                        decorationBox = { innerTextField ->
+                        .focusRequester(amountFocusRequester)
+                        .clickable { amountFocusRequester.requestFocus() },
+                    decorationBox = { innerTextField ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                "€",
+                                fontSize = 32.sp,
+                                fontFamily = FontFamily.Serif,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 6.dp, end = 4.dp)
+                            )
                             Box {
                                 if (amount.isEmpty()) {
                                     Text(
@@ -291,8 +293,8 @@ fun AddEditTransactionScreen(
                                 innerTextField()
                             }
                         }
-                    )
-                }
+                    }
+                )
                 Spacer(Modifier.height(16.dp))
                 // Quick-add chips
                 Row(
