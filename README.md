@@ -23,11 +23,11 @@
 
 | Home | Assets |
 |:---:|:---:|
-| ![Home](screenshots/Home.png) | ![Assets](screenshots/Assets.png) |
+| ![Home](screenshots/Home.png) | ![Assets](screenshots/Assets.png) 
 
 | Budget | History | Reports |
 |:---:|:---:|:---:|
-| ![Budget](screenshots/Budget.png) | ![History](screenshots/History.png) | ![Reports](screenshots/Reports.png) |
+| ![Budget](screenshots/Budget.png) | ![History](screenshots/History.png) | ![Reports](screenshots/Reports.png) 
 
 ---
 
