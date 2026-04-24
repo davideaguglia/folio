@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/src/main/res/drawable/logo_white.png" width="300" alt="Folio logo">
+  <img src="app/src/main/res/drawable/logo_white.png" width="200" alt="Folio logo">
 </p>
 
 <h1 align="center">Folio</h1>
