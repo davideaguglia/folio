@@ -8,11 +8,11 @@ Track your spending, manage investments, and understand your financial health â€
 
 ## Screenshots
 
-| Dashboard | Transactions | Investments |
+| Home | History | Assets |
 |:---------:|:------------:|:-----------:|
 | ![Dashboard](screenshots/Home.png) | ![Transactions](screenshots/History.png) | ![Investments](screenshots/Assets.png) |
 
-| Budget | Reports | Accounts |
+| Budget | Reports |
 |:------:|:-------:|:--------:|
 | ![Budget](screenshots/Budget.png) | ![Reports](screenshots/Reports.png) | |
 
