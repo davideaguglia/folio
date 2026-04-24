@@ -19,15 +19,16 @@
 
 ---
 
+
 ## Screenshots
 
 | Home | Assets |
 |:---:|:---:|
-| ![Home](screenshots/Home.png) | ![Assets](screenshots/Assets.png) 
+| <img src="screenshots/Home.png" width="180"> | <img src="screenshots/Assets.png" width="180"> |
 
 | Budget | History | Reports |
 |:---:|:---:|:---:|
-| ![Budget](screenshots/Budget.png) | ![History](screenshots/History.png) | ![Reports](screenshots/Reports.png) 
+| <img src="screenshots/Budget.png" width="180"> | <img src="screenshots/History.png" width="180"> | <img src="screenshots/Reports.png" width="180"> |
 
 ---
 
