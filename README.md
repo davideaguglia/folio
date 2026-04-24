@@ -1,6 +1,6 @@
-<table align="center" width="100%"><tr><td align="center" bgcolor="#1a3a2a" style="padding:32px">
-  <img src="app/src/main/res/drawable/logo_white.png" width="100" alt="Folio logo">
-</td></tr></table>
+<p align="center">
+  <img src="app/src/main/res/drawable/logo_white.png" width="300" alt="Folio logo">
+</p>
 
 <h1 align="center">Folio</h1>
 
