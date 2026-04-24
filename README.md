@@ -20,10 +20,9 @@ Track your spending, manage investments, and understand your financial health �
 
 ## Features
 
-- **Dashboard** — monthly net flow, income/expense summary, spending donut chart, recent transactions
-- **Transactions** — log income & expenses with category, account, date and notes; search, filter, swipe to delete, long-press multi-select
-- **Recurring transactions** — daily / weekly / monthly / yearly entries generated automatically at launch
-- **Investments** — track stocks, ETFs, crypto and more; search by ticker symbol or ISIN for live price lookup; portfolio breakdown chart
+- **Home** — monthly net flow, income/expense summary, spending donut chart, recent transactions
+- **History** — log income & expenses with category, account, date and notes; search, filter, swipe to delete, long-press multi-select; also log recurring transactions — daily / weekly / monthly / yearly entries generated automatically at launch
+- **Assets** — track stocks, ETFs, crypto and more; search by ticker symbol or ISIN for live price lookup; portfolio breakdown chart
 - **Budget** — monthly spending limits per category with colour-coded progress bars
 - **Reports** — 12-month income/expense bar chart, category breakdown, net worth history
 - **Dark mode** — toggle dark/light theme, persisted across sessions
