@@ -46,22 +46,6 @@ Go to [**Releases**](../../releases) and download the latest `folio.apk`.
 
 ---
 
-## Screenshots
-
-Drop your screenshots as `.png` files inside the `screenshots/` folder and they will appear in this README automatically. Suggested names:
-
-```
-screenshots/
-├── dashboard.png
-├── transactions.png
-├── investments.png
-├── budget.png
-├── reports.png
-└── accounts.png
-```
-
----
-
 ## Build from source
 
 ```bash
