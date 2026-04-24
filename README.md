@@ -24,11 +24,11 @@
 
 | Home | Assets |
 |:---:|:---:|
-| <img src="screenshots/Home.png" width="180"> | <img src="screenshots/Assets.png" width="180"> |
+| <img src="screenshots/Home.png" width="450"> | <img src="screenshots/Assets.png" width="450"> |
 
 | Budget | History | Reports |
 |:---:|:---:|:---:|
-| <img src="screenshots/Budget.png" width="180"> | <img src="screenshots/History.png" width="180"> | <img src="screenshots/Reports.png" width="180"> |
+| <img src="screenshots/Budget.png" width="250"> | <img src="screenshots/History.png" width="250"> | <img src="screenshots/Reports.png" width="250"> |
 
 ---
 
