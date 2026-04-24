@@ -1,5 +1,5 @@
 <table align="center" width="100%"><tr><td align="center" bgcolor="#1a3a2a" style="padding:32px">
-  <img src="app/src/main/res/drawable/logo.png" width="100" alt="Folio logo">
+  <img src="app/src/main/res/drawable/logo_white.png" width="100" alt="Folio logo">
 </td></tr></table>
 
 <h1 align="center">Folio</h1>
