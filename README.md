@@ -8,13 +8,13 @@ Track your spending, manage investments, and understand your financial health â€
 
 ## Screenshots
 
-| Home | History | Assets |
-|:---------:|:------------:|:-----------:|
-| ![Dashboard](screenshots/Home.png) | ![Transactions](screenshots/History.png) | ![Investments](screenshots/Assets.png) |
-
-| Budget | Reports |
+| Homw | Assets |
 |:------:|:-------:|
-| ![Budget](screenshots/Budget.png) | ![Reports](screenshots/Reports.png) | 
+| ![Home](screenshots/Home.png) | ![Reports](screenshots/Assets.png) | 
+
+| Budget | History | Reports |
+|:---------:|:------------:|:-----------:|
+| ![Dashboard](screenshots/Budget.png) | ![Transactions](screenshots/History.png) | ![Investments](screenshots/Reports.png) |
 
 ---
 
