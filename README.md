@@ -10,11 +10,11 @@ Track your spending, manage investments, and understand your financial health �
 
 | Dashboard | Transactions | Investments |
 |:---------:|:------------:|:-----------:|
-| ![Dashboard](screenshots/dashboard.png) | ![Transactions](screenshots/transactions.png) | ![Investments](screenshots/investments.png) |
+| ![Dashboard](screenshots/Home.png) | ![Transactions](screenshots/History.png) | ![Investments](screenshots/Assets.png) |
 
 | Budget | Reports | Accounts |
 |:------:|:-------:|:--------:|
-| ![Budget](screenshots/budget.png) | ![Reports](screenshots/reports.png) | ![Accounts](screenshots/accounts.png) |
+| ![Budget](screenshots/Budget.png) | ![Reports](screenshots/Reports.png) | |
 
 ---
 
@@ -26,9 +26,7 @@ Track your spending, manage investments, and understand your financial health �
 - **Investments** — track stocks, ETFs, crypto and more; search by ticker symbol or ISIN for live price lookup; portfolio breakdown chart
 - **Budget** — monthly spending limits per category with colour-coded progress bars
 - **Reports** — 12-month income/expense bar chart, category breakdown, net worth history
-- **Accounts** — Checking, Savings, Cash and Credit Card accounts with live balance
 - **Dark mode** — toggle dark/light theme, persisted across sessions
-- **CSV export** — export all transactions to a file in your Downloads folder
 - **100% offline** — all data lives in a local SQLite database on your device
 
 ---
