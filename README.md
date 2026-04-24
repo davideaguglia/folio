@@ -24,7 +24,7 @@
 
 | Home | Assets |
 |:---:|:---:|
-| <img src="screenshots/Home.png" width="450"> | <img src="screenshots/Assets.png" width="450"> |
+| <img src="screenshots/Home_v2.png" width="450"> | <img src="screenshots/Assets.png" width="450"> |
 
 | Budget | History | Reports |
 |:---:|:---:|:---:|
