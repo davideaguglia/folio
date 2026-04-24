@@ -28,7 +28,7 @@
 
 | Budget | History | Reports |
 |:---:|:---:|:---:|
-| <img src="screenshots/Budget.png" width="250"> | <img src="screenshots/History.png" width="250"> | <img src="screenshots/Reports.png" width="250"> |
+| <img src="screenshots/Budget.png" width="250"> | <img src="screenshots/History.png" width="250"> | <img src="screenshots/Screenshot_20260424-150556.png" width="250"> |
 
 ---
 
