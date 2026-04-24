@@ -8,7 +8,7 @@ Track your spending, manage investments, and understand your financial health â€
 
 ## Screenshots
 
-| Homw | Assets |
+| Home | Assets |
 |:------:|:-------:|
 | ![Home](screenshots/Home.png) | ![Reports](screenshots/Assets.png) | 
 
