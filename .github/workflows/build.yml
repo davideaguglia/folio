@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: Build debug APK
+    name: Build release APK
     runs-on: ubuntu-latest
 
     permissions:
@@ -32,20 +32,27 @@ jobs:
         with:
           packages: 'platforms;android-34 build-tools;34.0.0'
 
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > folio.keystore
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Build release APK
+        env:
+          KEYSTORE_PATH: folio.keystore
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-      # Using a wildcard helps find the APK even if the folder structure varies slightly
       - name: Rename APK
-        run: cp $(find . -name "app-debug.apk" | head -n 1) folio.apk
+        run: cp $(find . -name "app-release.apk" | head -n 1) folio.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: folio-debug
+          name: folio-release
           path: folio.apk
           retention-days: 7
 
