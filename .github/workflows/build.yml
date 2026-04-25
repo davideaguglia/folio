@@ -34,14 +34,14 @@ jobs:
         run: $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > folio.keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/folio.keystore
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build release APK
         env:
-          KEYSTORE_PATH: folio.keystore
+          KEYSTORE_PATH: ${{ github.workspace }}/folio.keystore
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
