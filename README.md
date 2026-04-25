@@ -2,7 +2,7 @@
   <img src="app/src/main/res/drawable/logo_white.png" width="200" alt="Folio logo">
 </p>
 
-<h1 align="center">Folio</h1>
+<h1 align="center">folio</h1>
 
 <p align="center">
   <em>A clean, offline-first personal finance app for Android.</em><br>
