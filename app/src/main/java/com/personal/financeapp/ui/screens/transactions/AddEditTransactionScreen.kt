@@ -118,11 +118,6 @@ fun AddEditTransactionScreen(
     val selectedCategory = filteredCategories.find { it.id == selectedCategoryId }
     val selectedAccount  = state.accounts.find { it.id == selectedAccountId }
 
-    val amountColor = when (type) {
-        "INCOME" -> Forest
-        else     -> MaterialTheme.colorScheme.onSurface
-    }
-
     val canSave = amount.toDoubleOrNull() != null && selectedCategoryId != 0L && selectedAccountId != 0L
     val focusManager = LocalFocusManager.current
     val amountFocusRequester = remember { FocusRequester() }
@@ -265,7 +260,7 @@ fun AddEditTransactionScreen(
                         letterSpacing = (-1).sp,
                         color = if (amount.isEmpty())
                             MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        else amountColor,
+                        else MaterialTheme.colorScheme.onSurface,
                         lineHeight = 64.sp
                     )
                 }
