@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/src/main/res/drawable/logo_white.png" width="200" alt="Folio logo">
+  <img src="app/src/main/res/drawable/logo_white.png" width="200" alt="folio logo">
 </p>
 
 <h1 align="center">folio</h1>
@@ -11,14 +11,14 @@
 </p>
 
 <p align="center">
+  <a href="../../releases/latest"><img src="https://img.shields.io/github/v/release/davideaguglia/folio?label=Download&color=2D5A3F" alt="Download latest release"></a>
   <img src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white" alt="Android">
   <img src="https://img.shields.io/badge/min_SDK-26_(Android_8.0)-356b44" alt="Min SDK 26">
   <img src="https://img.shields.io/badge/offline--first-100%25_private-245e3e" alt="Offline-first">
-  <img src="https://img.shields.io/badge/license-open_source-1a3a2a" alt="License">
+  <img src="https://img.shields.io/badge/license-open_source-1a3a2a" alt="Open source">
 </p>
 
 ---
-
 
 ## Screenshots
 
@@ -32,17 +32,28 @@
 
 ---
 
+## Why folio?
+
+Most personal finance apps require an account, sync your data to the cloud, and monetise through subscriptions or ads. folio does none of that.
+
+All your transactions, investments and budgets live in a local SQLite database on your phone — nothing ever leaves your device. No sign-up, no internet required after install, no privacy trade-off.
+
+It's a straightforward expense tracker and investment portfolio manager that respects your data.
+
+---
+
 ## ✦ Features
 
 | Feature | Description |
 |---|---|
-| **Home** | Monthly net flow, income/expense summary, spending donut chart, recent transactions |
-| **History** | Log income & expenses with category, account, date and notes; search, filter, swipe to delete, long-press multi-select |
+| **Dashboard** | Monthly net flow, income/expense summary, spending donut chart, recent transactions |
+| **Transactions** | Log income & expenses with category, account, date and notes; search, filter, swipe to delete, long-press multi-select |
 | **Recurring** | Daily / weekly / monthly / yearly entries generated automatically at launch |
 | **Assets** | Track stocks, ETFs, crypto and more; search by ticker symbol or ISIN for live price lookup; portfolio breakdown chart |
 | **Budget** | Monthly spending limits per category with colour-coded progress bars |
 | **Reports** | 12-month income/expense bar chart, category breakdown, net worth history |
 | **Dark mode** | Toggle dark/light theme, persisted across sessions |
+| **CSV export** | Export all transactions to a file in your Downloads folder |
 | **100% offline** | All data lives in a local SQLite database on your device |
 
 ---
@@ -64,8 +75,8 @@ Go to [**Releases**](../../releases) and grab the latest **`folio.apk`**.
 ## ✦ Build from source
 
 ```bash
-git clone https://github.com/davideaguglia/Finance_App.git
-cd Finance_App
+git clone https://github.com/davideaguglia/folio.git
+cd folio
 
 # Build a debug APK
 ./gradlew assembleDebug
